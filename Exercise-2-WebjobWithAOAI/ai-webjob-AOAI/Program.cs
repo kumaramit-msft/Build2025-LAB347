@@ -1,7 +1,11 @@
-﻿using Azure.Storage.Queues;
+﻿using Azure.Identity;
+using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
 using Microsoft.Data.Sqlite;
+using Microsoft.Identity.Client;
+using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace ai_webjob
 {
@@ -34,7 +38,11 @@ namespace ai_webjob
                 var avgRating = ratings.Count > 0 ? ratings.Average() : 0.0;
                 var reviewCount = reviews.Count;
 
-                var (summary, sentiment) = await GetSummaryAndSentimentFromAzureOpenAI(reviews, $"Product ID: {productId}");
+                var useLocalSLM = Environment.GetEnvironmentVariable("USE_LOCAL_SLM")?.ToLowerInvariant() == "true";
+
+                var (summary, sentiment) = useLocalSLM
+                    ? await GetSummaryAndSentimentFromLocalSLM(reviews, $"Product ID: {productId}")
+                    : await GetSummaryAndSentimentFromAzureOpenAI(reviews, $"Product ID: {productId}");
 
                 UpdateProductSummary(connection, productId, reviewCount, avgRating, summary, sentiment);
 
@@ -50,13 +58,25 @@ namespace ai_webjob
 
         static async Task<string> ReadProductIdFromQueueAsync()
         {
-            string queueName = "new-product-reviews";
+
+            string queueName = Environment.GetEnvironmentVariable("QUEUE_NAME") ?? "new-product-reviews";
+            string storageAccountName = Environment.GetEnvironmentVariable("STORAGE_ACCOUNT_NAME") ?? "randomstorageaccount";
+            string mi_client_id = Environment.GetEnvironmentVariable("USER_ASSIGNED_CLIENT_ID");
             string connectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTION_STRING");
 
-            if (string.IsNullOrEmpty(connectionString))
-                throw new InvalidOperationException("AZURE_STORAGE_CONNECTION_STRING not set.");
+            QueueClient? queueClient = null;
 
-            var queueClient = new QueueClient(connectionString, queueName);
+            if (!string.IsNullOrEmpty(mi_client_id))
+            {
+                queueClient = new QueueClient(
+                    new Uri($"https://{Environment.GetEnvironmentVariable("STORAGE_ACCOUNT_NAME")}.queue.core.windows.net/{queueName}"),
+                    new ManagedIdentityCredential(ManagedIdentityId.FromUserAssignedClientId(mi_client_id)));
+            }
+            else if (!string.IsNullOrEmpty(connectionString))
+            {
+                queueClient = new QueueClient(connectionString, queueName);
+            }
+
             var messagesResponse = await queueClient.ReceiveMessagesAsync(maxMessages: 1, visibilityTimeout: TimeSpan.FromSeconds(5));
             var messages = messagesResponse.Value;
             if (messages.Length == 0)
@@ -69,8 +89,7 @@ namespace ai_webjob
                 Console.WriteLine("Queue does not exist.");
                 return "";
             }
-
-            
+ 
             string productId = messages[0].MessageText;
 
             await queueClient.DeleteMessageAsync(messages[0].MessageId, messages[0].PopReceipt);
@@ -165,6 +184,69 @@ namespace ai_webjob
 
             var summaryLine = messageContent.Split('\n').FirstOrDefault(l => l.StartsWith("Summary:", StringComparison.OrdinalIgnoreCase));
             var sentimentLine = messageContent.Split('\n').FirstOrDefault(l => l.StartsWith("Sentiment:", StringComparison.OrdinalIgnoreCase));
+
+            string summary = summaryLine?.Replace("Summary:", "").Trim() ?? "";
+            string sentiment = sentimentLine?.Replace("Sentiment:", "").Trim().ToLowerInvariant() ?? "unknown";
+
+            return (summary, sentiment);
+        }
+
+        static async Task<(string Summary, string Sentiment)> GetSummaryAndSentimentFromLocalSLM(List<string> reviews, string context)
+        {
+            var url = "http://localhost:11434/v1/chat/completions";
+
+            var formattedReviews = string.Join("\n", reviews.Select(r => $"[{r}]"));
+
+            var requestPayload = new
+            {
+                messages = new[]
+                           {
+                                      new {
+                                          role = "system",
+                                          content = "You are an assistant that summarizes user reviews and analyzes sentiment."
+                                      },
+                                      new {
+                                          role = "user",
+                                          content = $"Below are individual product reviews, separated by [].\nPlease respond in the following format:\nSummary: <summary>\\nSentiment: <positive/mixed/negative>\nContext: {context}\n{formattedReviews}"
+                                      }
+                                  },
+                stream = true,
+                cache_prompt = false,
+                n_predict = 500
+            };
+
+            using var httpClient = new HttpClient();
+
+            var json = JsonSerializer.Serialize(requestPayload);
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+            var response = await httpClient.PostAsync(url, content);
+            response.EnsureSuccessStatusCode();
+
+            var stream = await response.Content.ReadAsStreamAsync();
+            using var reader = new StreamReader(stream);
+
+            var stringBuilder = new StringBuilder();
+
+            while (!reader.EndOfStream)
+            {
+                var line = await reader.ReadLineAsync();
+                line = line?.Replace("data: ", string.Empty).Trim();
+                if (!string.IsNullOrEmpty(line) && line != "[DONE]")
+                {
+                    var jsonObject = JsonNode.Parse(line);
+                    var responseContent = jsonObject?["choices"]?[0]?["delta"]?["content"]?.ToString();
+                    if (!string.IsNullOrEmpty(responseContent))
+                    {
+                        stringBuilder.Append(responseContent);
+                    }
+                }
+            }
+
+            var messageContent = stringBuilder.ToString();
+
+            var summaryLine = messageContent.Split('\n').FirstOrDefault(l => l.Trim().StartsWith("Summary:", StringComparison.OrdinalIgnoreCase));
+            var sentimentLine = messageContent.Split('\n').FirstOrDefault(l => l.Trim().StartsWith("Sentiment:", StringComparison.OrdinalIgnoreCase));
 
             string summary = summaryLine?.Replace("Summary:", "").Trim() ?? "";
             string sentiment = sentimentLine?.Replace("Sentiment:", "").Trim().ToLowerInvariant() ?? "unknown";
