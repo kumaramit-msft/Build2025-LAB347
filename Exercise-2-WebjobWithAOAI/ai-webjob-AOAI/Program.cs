@@ -1,8 +1,9 @@
-﻿using Azure.Identity;
+﻿using Azure;
+using Azure.AI.OpenAI;
+using Azure.Identity;
 using Azure.Storage.Queues;
-using Azure.Storage.Queues.Models;
 using Microsoft.Data.Sqlite;
-using Microsoft.Identity.Client;
+using OpenAI.Chat;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -14,35 +15,46 @@ namespace ai_webjob
         static async Task Main()
         {
             SQLitePCL.Batteries.Init();
-            var dbConnectionString = @"Data Source=/home/site/wwwroot/Data/devshopdb.db";
+            var isDevMode = (Environment.GetEnvironmentVariable("APP_ENV") == "DEV");
+            var dbConnectionString = isDevMode
+                ? @"Data Source=C:\\sidecar-samples\\AI-Samples\\devShopDNC\\Data\\devshopdb.db"
+                : @"Data Source=/home/site/wwwroot/Data/devshopdb.db";
 
             using var connection = new SqliteConnection(dbConnectionString);
             connection.Open();
 
-            string productIdStr = await ReadProductIdFromQueueAsync();
-            if (!int.TryParse(productIdStr, out int productId))
+            var (productId, reviewId) = await ReadProductIdFromQueueAsync();
+            if (productId == 0 || reviewId == 0)
             {
-                Console.WriteLine($"Invalid ProductID in queue: '{productIdStr}'");
+                // The reason will already have been printed inside ReadProductIdFromQueueAsync
                 return;
             }
 
             try
             {
-                var (reviews, ratings) = GetReviewsAndRatings(connection, productId);
-                if (reviews.Count == 0)
+                string latestReview = GetReviewTextById(connection, reviewId);
+                if (string.IsNullOrWhiteSpace(latestReview))
                 {
-                    Console.WriteLine($"[SKIP] Product {productId} has no valid reviews.");
+                    Console.WriteLine($"[EXIT] Review with ID {reviewId} not found or empty.");
                     return;
                 }
 
-                var avgRating = ratings.Count > 0 ? ratings.Average() : 0.0;
-                var reviewCount = reviews.Count;
+                string existingSummary = GetExistingSummary(connection, productId);
+                if (existingSummary == null)
+                {
+                    Console.WriteLine($"[EXIT] Product with ID {productId} not found in master table.");
+                    return;
+                }
+
 
                 var useLocalSLM = Environment.GetEnvironmentVariable("USE_LOCAL_SLM")?.ToLowerInvariant() == "true";
 
                 var (summary, sentiment) = useLocalSLM
-                    ? await GetSummaryAndSentimentFromLocalSLM(reviews, $"Product ID: {productId}")
-                    : await GetSummaryAndSentimentFromAzureOpenAI(reviews, $"Product ID: {productId}");
+                    ? await GetSummaryAndSentimentFromLocalSLM(existingSummary, latestReview, $"Product ID: {productId}, Review ID: {reviewId}")
+                    : await GetSummaryAndSentimentFromAzureOpenAI(existingSummary, latestReview, $"Product ID: {productId}, Review ID: {reviewId}");
+
+                int reviewCount = GetReviewCount(connection, productId);
+                double avgRating = CalculateAverageRating(connection, productId);
 
                 UpdateProductSummary(connection, productId, reviewCount, avgRating, summary, sentiment);
 
@@ -56,20 +68,20 @@ namespace ai_webjob
             Console.WriteLine("Done.");
         }
 
-        static async Task<string> ReadProductIdFromQueueAsync()
+        static async Task<(int ProductId, int ReviewId)> ReadProductIdFromQueueAsync()
         {
-
             string queueName = Environment.GetEnvironmentVariable("QUEUE_NAME") ?? "new-product-reviews";
             string storageAccountName = Environment.GetEnvironmentVariable("STORAGE_ACCOUNT_NAME") ?? "randomstorageaccount";
             string mi_client_id = Environment.GetEnvironmentVariable("USER_ASSIGNED_CLIENT_ID");
             string connectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTION_STRING");
+
 
             QueueClient? queueClient = null;
 
             if (!string.IsNullOrEmpty(mi_client_id))
             {
                 queueClient = new QueueClient(
-                    new Uri($"https://{Environment.GetEnvironmentVariable("STORAGE_ACCOUNT_NAME")}.queue.core.windows.net/{queueName}"),
+                    new Uri($"https://{storageAccountName}.queue.core.windows.net/{queueName}"),
                     new ManagedIdentityCredential(ManagedIdentityId.FromUserAssignedClientId(mi_client_id)));
             }
             else if (!string.IsNullOrEmpty(connectionString))
@@ -77,137 +89,149 @@ namespace ai_webjob
                 queueClient = new QueueClient(connectionString, queueName);
             }
 
-            var messagesResponse = await queueClient.ReceiveMessagesAsync(maxMessages: 1, visibilityTimeout: TimeSpan.FromSeconds(5));
-            var messages = messagesResponse.Value;
-            if (messages.Length == 0)
+            if (queueClient == null)
             {
-                Console.WriteLine("No messages found in queue.");
-                return "";
+                Console.WriteLine("[EXIT] Queue client could not be created. Check connection string or managed identity.");
+                return (0, 0);
             }
+
             if (!await queueClient.ExistsAsync())
             {
-                Console.WriteLine("Queue does not exist.");
-                return "";
+                Console.WriteLine("[EXIT] Queue does not exist.");
+                return (0, 0);
             }
- 
-            string productId = messages[0].MessageText;
 
+            var messages = (await queueClient.ReceiveMessagesAsync(maxMessages: 1, visibilityTimeout: TimeSpan.FromSeconds(5))).Value;
+            if (messages.Length == 0)
+            {
+                Console.WriteLine("[EXIT] No messages found in queue.");
+                return (0, 0);
+            }
+
+            string messageText = messages[0].MessageText;
             await queueClient.DeleteMessageAsync(messages[0].MessageId, messages[0].PopReceipt);
 
-            return productId;
-        }
-
-        static (List<string> Reviews, List<int> Ratings) GetReviewsAndRatings(SqliteConnection connection, int productId)
-        {
-            var reviews = new List<string>();
-            var ratings = new List<int>();
-
-            var sql = @"
-                SELECT review_text, rating 
-                FROM DevShop_Product_Reviews 
-                WHERE ProductID = @ProductID 
-                  AND review_text IS NOT NULL 
-                  AND TRIM(review_text) <> ''";
-
-            using var command = new SqliteCommand(sql, connection);
-            command.Parameters.AddWithValue("@ProductID", productId);
-            using var reader = command.ExecuteReader();
-
-            while (reader.Read())
+            try
             {
-                var text = reader.GetString(0);
-                var rating = reader.GetInt32(1);
-                reviews.Add(text);
-                ratings.Add(rating);
+                var json = JsonSerializer.Deserialize<JsonElement>(messageText);
+                int productId = json.GetProperty("productId").GetInt32();
+                int reviewId = json.GetProperty("reviewId").GetInt32();
+                return (productId, reviewId);
             }
-
-            return (reviews, ratings);
+            catch
+            {
+                Console.WriteLine("[EXIT] Failed to parse queue message into productId and reviewId.");
+                return (0, 0);
+            }
         }
 
-        static async Task<(string Summary, string Sentiment)> GetSummaryAndSentimentFromAzureOpenAI(List<string> reviews, string context)
+        static string GetReviewTextById(SqliteConnection connection, int reviewId)
+        {
+            var sql = "SELECT review_text FROM DevShop_Product_Reviews WHERE review_id = @ReviewID";
+            using var cmd = new SqliteCommand(sql, connection);
+            cmd.Parameters.AddWithValue("@ReviewID", reviewId);
+            return cmd.ExecuteScalar()?.ToString()?.Trim() ?? "";
+        }
+
+        static int GetReviewCount(SqliteConnection connection, int productId)
+        {
+            var sql = "SELECT COUNT(*) FROM DevShop_Product_Reviews WHERE ProductID = @ProductID AND review_text IS NOT NULL AND TRIM(review_text) <> ''";
+            using var cmd = new SqliteCommand(sql, connection);
+            cmd.Parameters.AddWithValue("@ProductID", productId);
+            return Convert.ToInt32(cmd.ExecuteScalar());
+        }
+
+        static double CalculateAverageRating(SqliteConnection connection, int productId)
+        {
+            var sql = "SELECT AVG(rating) FROM DevShop_Product_Reviews WHERE ProductID = @ProductID AND rating IS NOT NULL";
+            using var cmd = new SqliteCommand(sql, connection);
+            cmd.Parameters.AddWithValue("@ProductID", productId);
+            var result = cmd.ExecuteScalar();
+            return result != DBNull.Value ? Convert.ToDouble(result) : 0.0;
+        }
+
+        static string GetExistingSummary(SqliteConnection connection, int productId)
+        {
+            var sql = "SELECT review_summary FROM DevShop_Product_Master WHERE ProductID = @ProductID";
+            using var cmd = new SqliteCommand(sql, connection);
+            cmd.Parameters.AddWithValue("@ProductID", productId);
+            return cmd.ExecuteScalar()?.ToString()?.Trim();
+        }
+
+        static async Task<(string Summary, string Sentiment)> GetSummaryAndSentimentFromAzureOpenAI(string previousSummary, string latestReview, string context)
         {
             var endpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
             var key = Environment.GetEnvironmentVariable("AZURE_OPENAI_KEY");
             var deployment = Environment.GetEnvironmentVariable("AZURE_OPENAI_DEPLOYMENT");
+            var mi_client_id = Environment.GetEnvironmentVariable("USER_ASSIGNED_CLIENT_ID");
 
-            if (string.IsNullOrEmpty(endpoint) || string.IsNullOrEmpty(key) || string.IsNullOrEmpty(deployment))
-                throw new InvalidOperationException("Azure OpenAI environment variables are not properly set.");
+            AzureOpenAIClient openAIClient;
 
-            var url = $"{endpoint}/openai/deployments/{deployment}/chat/completions?api-version=2025-01-01-preview";
-
-            var formattedReviews = string.Join("\n", reviews.Select(r => $"[{r}]"));
-
-            var payload = new
+            if (!string.IsNullOrEmpty(mi_client_id))
             {
-                messages = new[]
-                {
-                    new {
-                        role = "system",
-                        content = new[] { new { type = "text", text = "You are an assistant that summarizes user reviews and analyzes sentiment." } }
-                    },
-                    new {
-                        role = "user",
-                        content = new[]
-                        {
-                            new { type = "text", text = "Below are individual product reviews, separated by []." },
-                            new { type = "text", text = "Please respond in the following format:" },
-                            new { type = "text", text = "Summary: <summary>\\nSentiment: <positive/mixed/negative>" },
-                            new { type = "text", text = $"\nContext: {context}" },
-                            new { type = "text", text = formattedReviews }
-                        }
-                    }
-                },
-                max_tokens = 800,
-                temperature = 0.3,
-                top_p = 0.95,
-                frequency_penalty = 0,
-                presence_penalty = 0,
-                stream = false
+                Console.WriteLine($"Using Managed Identity for accessing Open AI services");
+                // Use ManagedIdentityCredential for authentication
+                var credential = new ManagedIdentityCredential(ManagedIdentityId.FromUserAssignedClientId(mi_client_id));
+                openAIClient = new AzureOpenAIClient(new Uri(endpoint), credential);
+            }
+            else
+            {
+                // Use AzureKeyCredential for authentication
+                openAIClient = new AzureOpenAIClient(new Uri(endpoint), new AzureKeyCredential(key));
+            }
+
+            ChatClient client = openAIClient.GetChatClient(deployment);
+
+            var messages = new ChatMessage[]
+            {
+                       ChatMessage.CreateSystemMessage("You are an assistant that summarizes user reviews and analyzes sentiment."),
+                       ChatMessage.CreateUserMessage(
+                           $"""
+                           Below are individual product reviews, separated by [].
+                           Please respond in the following format:
+                           Summary: <summary>
+                           Sentiment: <positive/mixed/negative>
+
+                           Context: {context}
+                           [{latestReview}]
+                           Previous Summary: {previousSummary}
+                           """
+                       )
             };
 
-            using var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Add("api-key", key);
+            ChatCompletion completion = client.CompleteChat(messages);
+            string content = completion.Content[0].Text;
 
-            var json = JsonSerializer.Serialize(payload);
-            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+            string summary = "";
+            string sentiment = "unknown";
 
-            var response = await httpClient.PostAsync(url, content);
-            response.EnsureSuccessStatusCode();
-
-            var responseBody = await response.Content.ReadAsStringAsync();
-            using var doc = JsonDocument.Parse(responseBody);
-            var messageContent = doc.RootElement
-                .GetProperty("choices")[0]
-                .GetProperty("message")
-                .GetProperty("content")
-                .GetString();
-
-            var summaryLine = messageContent.Split('\n').FirstOrDefault(l => l.StartsWith("Summary:", StringComparison.OrdinalIgnoreCase));
-            var sentimentLine = messageContent.Split('\n').FirstOrDefault(l => l.StartsWith("Sentiment:", StringComparison.OrdinalIgnoreCase));
-
-            string summary = summaryLine?.Replace("Summary:", "").Trim() ?? "";
-            string sentiment = sentimentLine?.Replace("Sentiment:", "").Trim().ToLowerInvariant() ?? "unknown";
+            foreach (var line in content.Split('\n'))
+            {
+                if (line.StartsWith("Summary:", StringComparison.OrdinalIgnoreCase))
+                    summary = line["Summary:".Length..].Trim();
+                if (line.StartsWith("Sentiment:", StringComparison.OrdinalIgnoreCase))
+                    sentiment = line["Sentiment:".Length..].Trim().ToLowerInvariant();
+            }
 
             return (summary, sentiment);
         }
 
-        static async Task<(string Summary, string Sentiment)> GetSummaryAndSentimentFromLocalSLM(List<string> reviews, string context)
+        static async Task<(string Summary, string Sentiment)> GetSummaryAndSentimentFromLocalSLM(string previousSummary, string latestReview, string context)
         {
+            Console.WriteLine($"Using Local SLM for summarization");
             var url = "http://localhost:11434/v1/chat/completions";
-
-            var formattedReviews = string.Join("\n", reviews.Select(r => $"[{r}]"));
 
             var requestPayload = new
             {
                 messages = new[]
-                           {
+               {
                                       new {
                                           role = "system",
                                           content = "You are an assistant that summarizes user reviews and analyzes sentiment."
                                       },
                                       new {
                                           role = "user",
-                                          content = $"Below are individual product reviews, separated by [].\nPlease respond in the following format:\nSummary: <summary>\\nSentiment: <positive/mixed/negative>\nContext: {context}\n{formattedReviews}"
+                                          content = $"Below are individual product reviews, separated by [].\nPlease respond in the following format:\nSummary: <summary>\nSentiment: <positive/mixed/negative>\nContext: {context}\n[{latestReview}]\nPrevious Summary: {previousSummary}"
                                       }
                                   },
                 stream = true,
@@ -244,12 +268,16 @@ namespace ai_webjob
             }
 
             var messageContent = stringBuilder.ToString();
+            string summary = "";
+            string sentiment = "unknown";
 
-            var summaryLine = messageContent.Split('\n').FirstOrDefault(l => l.Trim().StartsWith("Summary:", StringComparison.OrdinalIgnoreCase));
-            var sentimentLine = messageContent.Split('\n').FirstOrDefault(l => l.Trim().StartsWith("Sentiment:", StringComparison.OrdinalIgnoreCase));
-
-            string summary = summaryLine?.Replace("Summary:", "").Trim() ?? "";
-            string sentiment = sentimentLine?.Replace("Sentiment:", "").Trim().ToLowerInvariant() ?? "unknown";
+            foreach (var line in messageContent.Split('\n'))
+            {
+                if (line.StartsWith("Summary:", StringComparison.OrdinalIgnoreCase))
+                    summary = line["Summary:".Length..].Trim();
+                if (line.StartsWith("Sentiment:", StringComparison.OrdinalIgnoreCase))
+                    sentiment = line["Sentiment:".Length..].Trim().ToLowerInvariant();
+            }
 
             return (summary, sentiment);
         }
@@ -271,9 +299,7 @@ namespace ai_webjob
             command.Parameters.AddWithValue("@Sentiment", sentiment);
             command.Parameters.AddWithValue("@ProductID", productId);
 
-            var affected = command.ExecuteNonQuery();
-
-            if (affected == 0)
+            if (command.ExecuteNonQuery() == 0)
             {
                 throw new Exception("Update failed. Product may not exist in Product_Master.");
             }

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Azure.Identity;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
+using System.Text.Json;
 
 namespace devShopDNC.Controllers
 {
@@ -11,6 +12,8 @@ namespace devShopDNC.Controllers
     {
 
         private static QueueClient? _queueClient;
+        private static int _reviewCount = 5000;
+
 
         static ReviewController()
         {
@@ -51,13 +54,16 @@ namespace devShopDNC.Controllers
             if (ModelState.IsValid)
             {
                 model.AssignRandomCustomerIDIfMissing();
+                model.ReviewID = ++_reviewCount; // Increment the review count for each new review
 
                 var db = new ProductsDB();
                 db.AddProductReview(
                     productId: model.ProductID,
                     customerId: model.CustomerID ?? 0,
                     rating: model.Rating,
-                    reviewText: model.ReviewText
+                    reviewText: model.ReviewText,
+                    reviewId: model.ReviewID
+
                 );
 
                 if (_queueClient == null)
@@ -68,8 +74,15 @@ namespace devShopDNC.Controllers
                 {
                     try
                     {
-                        _queueClient.SendMessage($"{model.ProductID}");
-                        Console.WriteLine($"Product added to queue: {model.ProductID}");
+                        var messagePayload = new
+                        {
+                            productId = model.ProductID,
+                            reviewId = model.ReviewID
+                        };
+
+                        string messageText = JsonSerializer.Serialize(messagePayload);
+                        _queueClient.SendMessage(messageText);
+                        Console.WriteLine($"Product and review added to queue: {messageText}");
                     }
                     catch (Exception ex)
                     {
