@@ -3,7 +3,9 @@ using Azure.AI.OpenAI;
 using Azure.Identity;
 using Azure.Storage.Queues;
 using Microsoft.Data.Sqlite;
+using OpenAI;
 using OpenAI.Chat;
+using System.ClientModel;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -165,6 +167,7 @@ namespace ai_webjob
             var deployment = Environment.GetEnvironmentVariable("AZURE_OPENAI_DEPLOYMENT");
             var mi_client_id = Environment.GetEnvironmentVariable("USER_ASSIGNED_CLIENT_ID");
 
+            Console.WriteLine($"Using OpenAI for summarization");
             AzureOpenAIClient openAIClient;
 
             if (!string.IsNullOrEmpty(mi_client_id))
@@ -219,59 +222,40 @@ namespace ai_webjob
         static async Task<(string Summary, string Sentiment)> GetSummaryAndSentimentFromLocalSLM(string previousSummary, string latestReview, string context)
         {
             Console.WriteLine($"Using Local SLM for summarization");
-            var url = "http://localhost:11434/v1/chat/completions";
+            var url = "http://localhost:11434/v1/";
 
-            var requestPayload = new
+            var openAIClient = new OpenAIClient(new ApiKeyCredential(key: "api-key"), options: new OpenAIClientOptions
             {
-                messages = new[]
-               {
-                                      new {
-                                          role = "system",
-                                          content = "You are an assistant that summarizes user reviews and analyzes sentiment."
-                                      },
-                                      new {
-                                          role = "user",
-                                          content = $"Below are individual product reviews, separated by [].\nPlease respond in the following format:\nSummary: <summary>\nSentiment: <positive/mixed/negative>\nContext: {context}\n[{latestReview}]\nPrevious Summary: {previousSummary}"
-                                      }
-                                  },
-                stream = true,
-                cache_prompt = false,
-                n_predict = 500
+                Endpoint = new Uri(url),
+            });
+
+            ChatClient client = openAIClient.GetChatClient("phi4");
+
+            var messages = new ChatMessage[]
+            {
+                       ChatMessage.CreateSystemMessage("You are an assistant that summarizes user reviews and analyzes sentiment."),
+                       ChatMessage.CreateUserMessage(
+                           $"""
+                           Below are individual product reviews, separated by [].
+                           Please respond in the following format:
+                           Summary: <summary>
+                           Sentiment: <positive/mixed/negative>
+
+                           Context: {context}
+                           [{latestReview}]
+                           Previous Summary: {previousSummary}
+                           """
+                       )
             };
 
-            using var httpClient = new HttpClient();
+            ChatCompletion completion = client.CompleteChat(messages);
 
-            var json = JsonSerializer.Serialize(requestPayload);
-            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+            string content = completion.Content[0].Text;
 
-            var response = await httpClient.PostAsync(url, content);
-            response.EnsureSuccessStatusCode();
-
-            var stream = await response.Content.ReadAsStreamAsync();
-            using var reader = new StreamReader(stream);
-
-            var stringBuilder = new StringBuilder();
-
-            while (!reader.EndOfStream)
-            {
-                var line = await reader.ReadLineAsync();
-                line = line?.Replace("data: ", string.Empty).Trim();
-                if (!string.IsNullOrEmpty(line) && line != "[DONE]")
-                {
-                    var jsonObject = JsonNode.Parse(line);
-                    var responseContent = jsonObject?["choices"]?[0]?["delta"]?["content"]?.ToString();
-                    if (!string.IsNullOrEmpty(responseContent))
-                    {
-                        stringBuilder.Append(responseContent);
-                    }
-                }
-            }
-
-            var messageContent = stringBuilder.ToString();
             string summary = "";
             string sentiment = "unknown";
 
-            foreach (var line in messageContent.Split('\n'))
+            foreach (var line in content.Split('\n'))
             {
                 if (line.StartsWith("Summary:", StringComparison.OrdinalIgnoreCase))
                     summary = line["Summary:".Length..].Trim();
