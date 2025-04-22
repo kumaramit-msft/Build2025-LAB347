@@ -21,6 +21,7 @@ using OpenAI.Chat;
 using OpenAI;
 using Azure.AI.OpenAI;
 using System.ClientModel;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 
 namespace devShopDNC.Controllers
@@ -83,8 +84,27 @@ namespace devShopDNC.Controllers
             string productDescription = "";
 
             // Retrieve the endpoint and deployment name from configuration
-            string endpoint = _configuration["ENDPOINT"] ?? string.Empty;
-            string deploymentName = _configuration["DEPLOYMENT_NAME"] ?? string.Empty;
+            var endpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT") ?? string.Empty;
+            var deployment = Environment.GetEnvironmentVariable("AZURE_OPENAI_DEPLOYMENT") ?? string.Empty;
+            var mi_client_id = Environment.GetEnvironmentVariable("USER_ASSIGNED_MI_CLIENT_ID") ?? string.Empty;
+
+            AzureOpenAIClient openAIClient;
+            if (!string.IsNullOrEmpty(mi_client_id))
+            {
+                // User-Assigned Managed Identity should be added to the app and given access to the OpenAI resource as Cognitive Services OpenAI User.
+                // Client ID of the User-Assigned Managed Identity should be passed as an AppSetting named USER_ASSIGNED_MI_CLIENT_ID.
+                Console.WriteLine($"Using User-Assigned Managed Identity for accessing Open AI services");
+                // Use ManagedIdentityCredential for authentication
+                var userAssignedCredential = new ManagedIdentityCredential(ManagedIdentityId.FromUserAssignedClientId(mi_client_id));
+                openAIClient = new AzureOpenAIClient(new Uri(endpoint), userAssignedCredential);
+            }
+            else
+            {
+                // System-Assigned Managed Identity should be enabled for the app and given access to the OpenAI resource as Cognitive Services OpenAI User.
+                Console.WriteLine($"Using System-Assigned Managed Identity for accessing Open AI services");
+                var systemAssignedCredential = new ManagedIdentityCredential();
+                openAIClient = new AzureOpenAIClient(new Uri(endpoint), systemAssignedCredential);
+            }
 
             #region promptcontext
             // Retrieve product ID from session
@@ -102,15 +122,8 @@ namespace devShopDNC.Controllers
 
             string messageContent = string.Empty;
 
-            var credential = new DefaultAzureCredential(
-                new DefaultAzureCredentialOptions {
-                });
-
             // Create a ChatClient using the AzureOpenAIClient
-            AzureOpenAIClient azureClient = new(
-            new Uri(endpoint),
-            credential);
-            ChatClient chatClient = azureClient.GetChatClient(deploymentName);
+            ChatClient chatClient = openAIClient.GetChatClient(deployment);
             
             // Create a completion request
             ChatCompletion completion = chatClient.CompleteChat(
@@ -141,7 +154,5 @@ namespace devShopDNC.Controllers
 
             return $"<p>{messageContent}</p>";
         }
-
-
     }
 }
