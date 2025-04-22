@@ -5,7 +5,7 @@ In this exercise, you will be able to create chat assistant for the retail produ
 - Clone the repository from the main branch or fork it if you want to keep track of your changes if you have a GitHub account.
 - Create your Codespaces by clicking on the Code button, your new Codespace will be opened in a new browser tab
 
- ![Menu option showing option to create new Codespace](./images/Exercise-1-codespace.png)
+ ![Menu option showing option to create new Codespace](./images/LAB347-ex1-codespaces.png)
 
 - View the project code in the Explorer blade inside VS Code Online
 
@@ -24,18 +24,19 @@ In this exercise, you will be able to create chat assistant for the retail produ
 ### Deploy webapp to Azure App Service
 - Right click on devshopDNC.csproj and select Open In Integrated Terminal
 
-  ![Context menu showing option to Open in integrated Terminal](./images/LAB347-ex1-codespaces.png)
+  ![Context menu showing option to Open in integrated Terminal](./images/LAB347-ex1-terminal.png)
 
 - **To publish the web app, run the command in the opened terminal, run dotnet publish -c Release -o ./bin/Publish**
-- Right click on **bin--> Publish** folder and select Deploy to webApp option
-  
-- Press Deploy
 
-  ![Warning message asking if you're sure you want to deploy](./images/Exercise-1-deploymsg.png)  
+  ![Terminal showing command run](./images/LAB347-ex1-buildapp.png)
+
+- Right click on **bin--> Publish** folder and select Deploy to webApp option
+
+  ![Deploy to web app](./images/LAB347-ex1-deploytowebapp.png)
+
+- Select the already existing webapp for Exercise 1
   
-- Select the already existing webapp for Exercise1
-  
-  ![List of resources to select from](./images/Exercise-1-resource-select.png)
+  ![List of resources to select from](./images/LAB347-ex1-deployappservice.png)
   
 ### Run the webapp
 - Once deployed, click on the Browse button on the portal by going to the App Service web app view to view the web app
@@ -72,7 +73,7 @@ Add these appsettings to App Service web app.
 
  ![Deploy model settings](./images/LAB347-ex1-deploymodel.png) 
 
-- Get Azure AI endpoint (Only select url till domain name, excluding the url path after / )
+- Get Model name and Azure AI endpoint (Only select url till domain name, excluding the url path after /)
 
  ![Get model settings](./images/LAB347-ex1-clickdeployedmodel.png)
 
@@ -92,5 +93,5 @@ Add these appsettings to App Service web app.
 ### Monitor the webapp
 To monitor your web app, you can leverage the LogStream option under Monitoring section on the webapp portal view.
 
- ![Log stream experience for the web app in Azure portal](./images/Exercise-1-logs.png)
+ ![Log stream experience for the web app in Azure portal](./images/LAB347-ex1-logstream.png)
 
