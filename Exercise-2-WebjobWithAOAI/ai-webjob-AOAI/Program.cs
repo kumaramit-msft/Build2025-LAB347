@@ -48,12 +48,7 @@ namespace ai_webjob
                     return;
                 }
 
-
-                var useLocalSLM = Environment.GetEnvironmentVariable("USE_LOCAL_SLM")?.ToLowerInvariant() == "true";
-
-                var (summary, sentiment) = useLocalSLM
-                    ? await GetSummaryAndSentimentFromLocalSLM(existingSummary, latestReview, $"Product ID: {productId}, Review ID: {reviewId}")
-                    : await GetSummaryAndSentimentFromAzureOpenAI(existingSummary, latestReview, $"Product ID: {productId}, Review ID: {reviewId}");
+                var (summary, sentiment) = await GetSummaryAndSentimentFromAzureOpenAI(existingSummary, latestReview, $"Product ID: {productId}, Review ID: {reviewId}");
 
                 int reviewCount = GetReviewCount(connection, productId);
                 double avgRating = CalculateAverageRating(connection, productId);
@@ -74,21 +69,33 @@ namespace ai_webjob
         {
             string queueName = Environment.GetEnvironmentVariable("QUEUE_NAME") ?? "new-product-reviews";
             string storageAccountName = Environment.GetEnvironmentVariable("STORAGE_ACCOUNT_NAME") ?? "randomstorageaccount";
-            string mi_client_id = Environment.GetEnvironmentVariable("USER_ASSIGNED_CLIENT_ID");
-            string connectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTION_STRING");
+            string mi_client_id = Environment.GetEnvironmentVariable("USER_ASSIGNED_MI_CLIENT_ID") ?? string.Empty;
+            string connectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTION_STRING") ?? string.Empty;
 
 
             QueueClient? queueClient = null;
 
             if (!string.IsNullOrEmpty(mi_client_id))
             {
+                // User-Assigned Managed Identity should be added to the app and given access to the Storage Account as Storage Queue Data Contributor.
+                // Client ID of the User-Assigned Managed Identity should be passed as an AppSetting named USER_ASSIGNED_MI_CLIENT_ID.
+                Console.WriteLine($"Connecting to storage queue {queueName} using User-Assigned Managed Identity");
                 queueClient = new QueueClient(
                     new Uri($"https://{storageAccountName}.queue.core.windows.net/{queueName}"),
                     new ManagedIdentityCredential(ManagedIdentityId.FromUserAssignedClientId(mi_client_id)));
             }
             else if (!string.IsNullOrEmpty(connectionString))
             {
+                Console.WriteLine($"Connecting to storage queue {queueName} using Connection string");
                 queueClient = new QueueClient(connectionString, queueName);
+            }
+            else
+            {
+                // System-Assigned Managed Identity should be enabled for the app and given access to the Storage Account as Storage Queue Data Contributor.
+                Console.WriteLine($"Connecting to storage queue {queueName} using System-Assigned Managed Identity");
+                queueClient = new QueueClient(
+                    new Uri($"https://{storageAccountName}.queue.core.windows.net/{queueName}"),
+                    new ManagedIdentityCredential());
             }
 
             if (queueClient == null)
@@ -162,25 +169,36 @@ namespace ai_webjob
 
         static async Task<(string Summary, string Sentiment)> GetSummaryAndSentimentFromAzureOpenAI(string previousSummary, string latestReview, string context)
         {
-            var endpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
-            var key = Environment.GetEnvironmentVariable("AZURE_OPENAI_KEY");
-            var deployment = Environment.GetEnvironmentVariable("AZURE_OPENAI_DEPLOYMENT");
-            var mi_client_id = Environment.GetEnvironmentVariable("USER_ASSIGNED_CLIENT_ID");
+            // Retrieve the endpoint and deployment name from configuration
+            var endpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT") ?? string.Empty;
+            var key = Environment.GetEnvironmentVariable("AZURE_OPENAI_KEY") ?? string.Empty;
+            var deployment = Environment.GetEnvironmentVariable("AZURE_OPENAI_DEPLOYMENT") ?? string.Empty;
+            var mi_client_id = Environment.GetEnvironmentVariable("USER_ASSIGNED_MI_CLIENT_ID") ?? string.Empty;
 
             Console.WriteLine($"Using OpenAI for summarization");
-            AzureOpenAIClient openAIClient;
 
+            AzureOpenAIClient openAIClient;
             if (!string.IsNullOrEmpty(mi_client_id))
             {
-                Console.WriteLine($"Using Managed Identity for accessing Open AI services");
+                // User-Assigned Managed Identity should be added to the app and given access to the OpenAI resource as Cognitive Services OpenAI User.
+                // Client ID of the User-Assigned Managed Identity should be passed as an AppSetting named USER_ASSIGNED_MI_CLIENT_ID.
+                Console.WriteLine($"Using User-Assigned Managed Identity for accessing Open AI services");
                 // Use ManagedIdentityCredential for authentication
-                var credential = new ManagedIdentityCredential(ManagedIdentityId.FromUserAssignedClientId(mi_client_id));
-                openAIClient = new AzureOpenAIClient(new Uri(endpoint), credential);
+                var userAssignedCredential = new ManagedIdentityCredential(ManagedIdentityId.FromUserAssignedClientId(mi_client_id));
+                openAIClient = new AzureOpenAIClient(new Uri(endpoint), userAssignedCredential);
+            }
+            else if (!string.IsNullOrEmpty(key))
+            {
+                // Use AzureKeyCredential for authentication
+                Console.WriteLine($"Using OPEN AI KEY for accessing Open AI services");
+                openAIClient = new AzureOpenAIClient(new Uri(endpoint), new AzureKeyCredential(key));
             }
             else
             {
-                // Use AzureKeyCredential for authentication
-                openAIClient = new AzureOpenAIClient(new Uri(endpoint), new AzureKeyCredential(key));
+                // System-Assigned Managed Identity should be enabled for the app and given access to the OpenAI resource as Cognitive Services OpenAI User.
+                Console.WriteLine($"Using System-Assigned Managed Identity for accessing Open AI services");
+                var systemAssignedCredential = new ManagedIdentityCredential();
+                openAIClient = new AzureOpenAIClient(new Uri(endpoint), systemAssignedCredential);
             }
 
             ChatClient client = openAIClient.GetChatClient(deployment);
@@ -203,53 +221,6 @@ namespace ai_webjob
             };
 
             ChatCompletion completion = client.CompleteChat(messages);
-            string content = completion.Content[0].Text;
-
-            string summary = "";
-            string sentiment = "unknown";
-
-            foreach (var line in content.Split('\n'))
-            {
-                if (line.StartsWith("Summary:", StringComparison.OrdinalIgnoreCase))
-                    summary = line["Summary:".Length..].Trim();
-                if (line.StartsWith("Sentiment:", StringComparison.OrdinalIgnoreCase))
-                    sentiment = line["Sentiment:".Length..].Trim().ToLowerInvariant();
-            }
-
-            return (summary, sentiment);
-        }
-
-        static async Task<(string Summary, string Sentiment)> GetSummaryAndSentimentFromLocalSLM(string previousSummary, string latestReview, string context)
-        {
-            Console.WriteLine($"Using Local SLM for summarization");
-            var url = "http://localhost:11434/v1/";
-
-            var openAIClient = new OpenAIClient(new ApiKeyCredential(key: "api-key"), options: new OpenAIClientOptions
-            {
-                Endpoint = new Uri(url),
-            });
-
-            ChatClient client = openAIClient.GetChatClient("phi4");
-
-            var messages = new ChatMessage[]
-            {
-                       ChatMessage.CreateSystemMessage("You are an assistant that summarizes user reviews and analyzes sentiment."),
-                       ChatMessage.CreateUserMessage(
-                           $"""
-                           Below are individual product reviews, separated by [].
-                           Please respond in the following format:
-                           Summary: <summary>
-                           Sentiment: <positive/mixed/negative>
-
-                           Context: {context}
-                           [{latestReview}]
-                           Previous Summary: {previousSummary}
-                           """
-                       )
-            };
-
-            ChatCompletion completion = client.CompleteChat(messages);
-
             string content = completion.Content[0].Text;
 
             string summary = "";

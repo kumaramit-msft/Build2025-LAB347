@@ -334,22 +334,25 @@ namespace devShopDNC.Models {
             throw new NotImplementedException();
         }
 
-        public void AddProductReview(int productId, int customerId, int rating, string reviewText, int reviewId)
+        public int AddProductReview(int productId, int customerId, int rating, string reviewText)
         {
             using (var connection = new SqliteConnection(connString))
             {
                 var command = new SqliteCommand(
-                    @"INSERT INTO DevShop_Product_Reviews (ProductID, CustomerID, rating, review_text, review_id) 
-              VALUES (@ProductID, @CustomerID, @Rating, @ReviewText, @ReviewId);", connection);
+                    @"INSERT INTO DevShop_Product_Reviews (ProductID, CustomerID, rating, review_text) 
+              VALUES (@ProductID, @CustomerID, @Rating, @ReviewText);", connection);
 
                 command.Parameters.AddWithValue("@ProductID", productId);
                 command.Parameters.AddWithValue("@CustomerID", customerId);
                 command.Parameters.AddWithValue("@Rating", rating);
                 command.Parameters.AddWithValue("@ReviewText", reviewText ?? (object)DBNull.Value);
-                command.Parameters.AddWithValue("@ReviewId", reviewId);
 
                 connection.Open();
                 command.ExecuteNonQuery();
+
+                // Retrieve the auto-generated review_id
+                var getIdCommand = new SqliteCommand("SELECT last_insert_rowid();", connection);
+                return Convert.ToInt32(getIdCommand.ExecuteScalar());
             }
         }
 

@@ -12,20 +12,31 @@ namespace devShopDNC.Controllers
     {
 
         private static QueueClient? _queueClient;
-        private static int _reviewCount = 5000;
-
 
         static ReviewController()
         {
             // Initialize the Azure Storage Queue client
+            string queueName = Environment.GetEnvironmentVariable("QUEUE_NAME") ?? "new-product-reviews";
             string storageAccountName = Environment.GetEnvironmentVariable("STORAGE_ACCOUNT_NAME") ?? "randomstorageaccount";
-            string queueName = Environment.GetEnvironmentVariable("QUEUE_NAME") ?? "randomqueue"; // Get queue name from environment variable
+            string mi_client_id = Environment.GetEnvironmentVariable("USER_ASSIGNED_MI_CLIENT_ID") ?? string.Empty;
 
-            // Instantiate a QueueClient to create and interact with the queue
-            _queueClient = new QueueClient(
-                new Uri($"https://{storageAccountName}.queue.core.windows.net/{queueName}"),
-                new ManagedIdentityCredential(ManagedIdentityId.FromUserAssignedClientId(
-                    Environment.GetEnvironmentVariable("USER_ASSIGNED_CLIENT_ID") ?? "randomclientid")));
+            if (!string.IsNullOrEmpty(mi_client_id))
+            {
+                // User-Assigned Managed Identity should be added to the app and given access to the Storage Account as Storage Queue Data Contributor.
+                // Client ID of the User-Assigned Managed Identity should be passed as an AppSetting named USER_ASSIGNED_MI_CLIENT_ID.
+                Console.WriteLine($"Connecting to storage queue {queueName} using User-Assigned Managed Identity");
+                _queueClient = new QueueClient(
+                    new Uri($"https://{storageAccountName}.queue.core.windows.net/{queueName}"),
+                    new ManagedIdentityCredential(ManagedIdentityId.FromUserAssignedClientId(mi_client_id)));
+            }
+            else
+            {
+                // System-Assigned Managed Identity should be enabled for the app and given access to the Storage Account as Storage Queue Data Contributor.
+                Console.WriteLine($"Connecting to storage queue {queueName} using System-Assigned Managed Identity");
+                _queueClient = new QueueClient(
+                    new Uri($"https://{storageAccountName}.queue.core.windows.net/{queueName}"),
+                    new ManagedIdentityCredential());
+            }
 
             try
             {
@@ -54,16 +65,13 @@ namespace devShopDNC.Controllers
             if (ModelState.IsValid)
             {
                 model.AssignRandomCustomerIDIfMissing();
-                model.ReviewID = ++_reviewCount; // Increment the review count for each new review
 
                 var db = new ProductsDB();
-                db.AddProductReview(
+                int reviewId = db.AddProductReview(
                     productId: model.ProductID,
                     customerId: model.CustomerID ?? 0,
                     rating: model.Rating,
-                    reviewText: model.ReviewText,
-                    reviewId: model.ReviewID
-
+                    reviewText: model.ReviewText
                 );
 
                 if (_queueClient == null)
@@ -77,7 +85,7 @@ namespace devShopDNC.Controllers
                         var messagePayload = new
                         {
                             productId = model.ProductID,
-                            reviewId = model.ReviewID
+                            reviewId = reviewId
                         };
 
                         string messageText = JsonSerializer.Serialize(messagePayload);
