@@ -24,7 +24,7 @@ In this exercise, you will be able to create chat assistant for the retail produ
 ### Deploy webapp to Azure App Service
 - Right click on devshopDNC.csproj and select Open In Integrated Terminal
 
-  ![Context menu showing option to Open in integrated Terminal](./images/Exercise-1-terminal.png)
+  ![Context menu showing option to Open in integrated Terminal](./images/LAB347-ex1-codespaces.png)
 
 - **To publish the web app, run the command in the opened terminal, run dotnet publish -c Release -o ./bin/Publish**
 - Right click on **bin--> Publish** folder and select Deploy to webApp option
@@ -40,9 +40,9 @@ In this exercise, you will be able to create chat assistant for the retail produ
 ### Run the webapp
 - Once deployed, click on the Browse button on the portal by going to the App Service web app view to view the web app
 
-  ![Screenshot of website resource in Azure portal showing Browse option](./images/Exercise-1-browse-web.png)
+  ![Screenshot of website resource in Azure portal showing Browse option](./images/LAB347-ex1-browse-web.png)
 
-  ![Image showing Homepage of Dev Shop application](./images/Exercise-1-webui.png)  
+  ![Image showing Homepage of Dev Shop application](./images/LAB347-ex1-webui.png)  
 
 ### Enabling Managed Identity
 
@@ -58,21 +58,30 @@ Now, the website is up and running. Lets connect with Azure OpenAI to get the Ch
 
 Add these appsettings to App Service web app.
 
-- Go to Azure Open AI on the portal and open it in Azure AI Studio
+- Go to Azure Open AI on the portal and open it in Azure AI Foundry Portal
 
- ![Azure Open AI resource in Azure portal](./images/Exercise-1-openai.png)  
+ ![Azure Open AI resource in Azure portal](./images/LAB347-ex1-gotoaifoundry.png)  
 
-- Deploy the gpt-4o model by going to Deployments and select gpt-4o Chat completion model and click Confirm
+- Deploy the gpt-4o model by going to Deployments and select gpt-4o-mini Chat completion model and click Confirm
 
- ![Azure AI Studio screenshot showing model Deployments](./images/Exercise-1-deploymodel.png)
+ ![Azure AI Foundry screenshot showing model Deployments](./images/LAB347-ex1-modeldeploy.png)
+
+  ![Azure AI Foundry screenshot showing selected model as gpt-4o-mini](./images/LAB347-ex1-gpt-4o-mini.png)
 
 - Give the deployment name and select deployment type as "Global Standard"
 
- ![Deploy model settings](./images/Exercise-1-gpt4o.png) 
+ ![Deploy model settings](./images/LAB347-ex1-deploymodel.png) 
 
-- Switch back to the App Service configuration blade. Add the environment variables DEPLOYMENT_NAME and ENDPOINT. For ENDPOINT value, use TargetUri and for DEPLOYMENT_NAME value, use deployment name retrieved from the above step 
+- Get Azure AI endpoint (Only select url till domain name, excluding the url path after / )
 
- ![Environment variables section within Azure portal view of web app resource](./images/Exercise-1-envvar.png)
+ ![Get model settings](./images/LAB347-ex1-clickdeployedmodel.png)
+
+ ![Get model settings](./images/LAB347-ex1-copyazureaiurl.png)
+
+
+- Switch back to the App Service configuration blade. Add the environment variables AZURE_OPENAI_DEPLOYMENT and AZURE_OPENAI_ENDPOINT. For AZURE_OPENAI_ENDPOINT value, use TargetUri and for AZURE_OPENAI_DEPLOYMENT value, use deployment name retrieved from the above step 
+
+ ![Environment variables section within Azure portal view of web app resource](./images/LAB347-ex1-appsettings.png)
 
 ### Chat with AI Assistant
 - Go to Clothing tab and select a product. 
