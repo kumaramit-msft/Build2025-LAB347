@@ -1,154 +1,118 @@
+# Exercise 4: Use an Azure AI Agent and the OpenAPI Specified Tool with an App Service App
+In this exercise, you will connect an Azure AI Agent from the [Azure AI Agent Service](https://learn.microsoft.com/azure/ai-services/agents/overview) to an App Service app. The app builds off of the Fashion Store Assistant app in the previous exercise, and shows you an alternative way of integrating AI functionality into your apps. The app already has basic shopping cart functionality and includes an API with an OpenAPI specification for shopping cart management. The Azure AI Agent is given the OpenAPI spec for the web app so that it can handle product recommendations, shopping assistance, shopping cart management, and more on your behalf via a chat interface. This sample builds off of the guidance documented by the AI Agent Service in [How to use Azure AI Agent Service with OpenAPI Specified Tools](https://learn.microsoft.com/azure/ai-services/agents/how-to/tools/openapi-spec?tabs=python&pivots=overview).
 
-# Exercise 4: Running Phi-3 SLM as a Sidecar for Linux App Service
+## Architecture Overview
+- Interactive Blazor UI for fashion e-commerce
+- Integration with Azure AI Agent Service for intelligent shopping assistance
+- Sample usage of the OpenAPI Specified Tool with Azure App Service
+- Secure authentication to Azure AI Agent Service with Azure managed identity
 
-In this exercise, you will learn how to use the Phi-3 ONNX Small-Language Model (SLM) as a sidecar for your application.
+## Prerequisites
+1. App Service app with Fashion Store app deployed (provided)
+2. Azure AI Foundry Project (provided)
 
-## Overview of Phi-3 SLM
-
-Phi-3 is a compact, efficient SLM designed to handle natural language processing tasks with minimal computational overhead. Unlike large language models (LLMs), SLMs like Phi-3 are optimized for scenarios with limited resources, providing quick and contextually relevant responses without high costs. Running Phi-3 on ONNX allows it to function effectively as a sidecar, bringing conversational AI capabilities to diverse environments, including Linux App Service. By integrating an SLM as a sidecar, developers can add sophisticated language features to applications, enhancing user engagement while maintaining operational efficiency.
-
-In this exercise, you will implement a chat application that lets users inquire about products in your fashion store. Powered by Phi-3, the app will provide real-time responses, enhancing the customer experience with on-demand product information and styling suggestions.
-
-## Navigating to the Partly Deployed Linux App Service
-
+## Navigating to the Deployed Linux App Service
 1. Open a browser and go to [Azure Portal](https://portal.azure.com) using the credentials provided.
 2. Click on **App Service** in the top navigation bar.
-3. From the list of apps, click on **Exercise-4** application.
+3. From the list of apps, click on **Exercise-5** application.
 4. On the **Overview** page, you can view some properties of the app:
-   - The app runs on **P2mv3**, a Premium memory-optimized SKU offered by App Service. [Learn more about Premium SKUs here.](https://azure.microsoft.com/pricing/details/app-service/)
+   - The app runs on **P0v3**.
    - This application is deployed with **.NET 8**.
 
-  ![Web Application Overview in Azure Portal](./images/Exercise-4-overview.jpg)
-## Exploring the Deployment Center
+    ![Web Application Overview in Azure Portal](./images/Exercise-4-appoverview.png)
+  
+    You can navigate to the app at this point to see what it looks like and what functionality is available. Click **Browse** to navigate to the app.
+    
+    Visit the Inventory and Cart pages in the app and feel free to add some items to your cart to see how the app works.
 
-1. Click on **Deployment Center** in the left navigation.
-2. The application includes a Phi-3 sidecar as part of its setup.
+    ![Shopping cart image](./images/Exercise-4-browseapp.png)
 
-![Deployment Center for a web app resource in the Azure portal](./images/Exercise-4-DC.jpg)
-## Code Exploration
+    If you try to use the Assistant at this point, you receive an error message indicating that you need to connect your agent to the app.
 
-In your lab fork, navigate to the folder `Exercise 4`. Inside, you will find two projects:
+    ![Agent not configured error message in Assistant](./images/Exercise-4-agentnotconfigured.png)
 
-- **dotnetfashionassistant**: This is the frontend Blazor application.
-- **phi-3-sidecar**: A Python FastAPI which exposes an endpoint to invoke the Phi-3 ONNX model, configured to run as a sidecar container. With the Sidecar feature, you can have the main application and the sidecar running different language stacks.
+## Step 1: Create the Agent in the Azure AI Agent Service
+1. In the [Azure Portal](https://portal.azure.com), go to your **Resource group** where all of the pre-created lab resources are located.
+2. In the list of resources, find the resource with type **Azure AI project**. Click on that resource.
 
-### Backend Project (phi-3-sidecar)
+    ![Azure AI Project location in resource group](./images/Exercise-4-aiproject.png)
 
-1. Open the `phi-3-sidecar` project.
-2. Navigate to **model_api.py**:
-   - Initialize the model in the constructor:
-     ```python
-      model_path = "/app/cpu_and_mobile/cpu-int4-rtn-block-32-acc-level-4"
-      model = og.Model(model_path)
-     ```
-   - Phi-3 ONNX is an offline model, accessible from the filesystem. Here, the 4K CPU-based model is utilized.
-   - Initialize the System  and Prompt:
-     ```python
-      chat_template = '<|system|>\nYou are an AI assistant that helps people find concise information about products. Keep your responses brief and focus on key points. Limit the number of product key features to no more than three.<|end|>\n<|user|>\n{input} <|end|>\n<|assistant|>'
+3. On the next screen, click on **Launch studio** to open the Azure AI Foundry Studio.
+4. On your local machine, open up **Notepad** or a location where you can copy and paste a couple things which will be needed to connect your agent to your app.
+5. On the right-hand side of the Azure AI Foundry, you'll find your **Project connection string**. Copy and paste this entire string into your Notepad for use later.
 
-      input = f"{data.user_message} Product: {data.product_name}. Description: {data.product_description}"
-      prompt = chat_template.format(input=input)
-     ```
-   - The API method **predict** accepts three parameters – the user prompt, product name, and product description.
-   - Pass the prompt to the model and stream the response token by token:
-     ```python
-      generator = og.Generator(model, params)
-      .....
-      while not generator.is_done():
-                  generator.compute_logits()
-                  generator.generate_next_token()
-                  
-                  new_token = generator.get_next_tokens()[0]
-                  generated_text += tokenizer_stream.decode(new_token)
-                  yield tokenizer_stream.decode(new_token)
-     ```
+    ![Connection string location in Azure AI Foundry project](./images/Exercise-4-connstring.png)
 
-3. Open the **Dockerfile**:
-   - Use the Dockerfile to create the container image. In the Dockerfile, we are copying the model and exposing the container port.
-     ```Dockerfile
-      # Step 6: Copy the entire directory containing the ONNX model and its data files
-      COPY ./Phi-3-mini-4k-instruct-onnx/cpu_and_mobile/cpu-int4-rtn-block-32-acc-level-4 /app/cpu_and_mobile/cpu-int4-rtn-block-32-acc-level-4
+6. You are now going to create the agent. On the left-hand meny, click **Agents**.
+    
+    ![Agent creation experience location](./images/Exercise-4-agents.png)
 
-      # Step 7: Copy the API script into the container
-      COPY ./model_api.py /app/
+7. On the next screen, click **+ New Agent**. An agent will appear in the table on the screen.
+8. Copy and paste the agent's **ID** into your Notepad for use later.
 
-      # Step 8: Expose the port the app runs on
-      EXPOSE 8000
+    ![Agent ID location in Azure AI Foundry Project](./images/Exercise-4-agentid.png)
 
-      # Step 9: Run the API using Uvicorn
-      CMD ["uvicorn", "model_api:app", "--host", "0.0.0.0", "--port", "8000"]
-     ```
+## Step 2. Configure the Agent with the OpenAPI Specified Tool
+1. In the **Setup** menu, copy and paste the following **Instructions** for the Agent. These are general instructions for your agent to give it some context on its role and purpose. This is also where you can include guidance to the agent to stick to certain context - such as only answering questions about the fashion store and not unrelated topics.
 
-### Frontend Project (dotnetfashionassistant)
+    ```
+    You are an agent for a fashion store that sells clothing. You have the ability to view inventory, update the customer's shopping cart, and answer questions about the clothing items that are in the inventory and cart. You should not answer questions about topics that are unrelated to the fashion store.
+    ```
 
-1. Open the **dotnetfashionassistant** project in VS Code.
-2. Open **Program.cs** and configure the endpoint for the sidecar application:
-   ```csharp
-   builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.Configuration["FashionAssistantAPI:Url"] ?? "http://localhost:8000/predict") });
-   builder.Services.AddHttpClient();
-   ```
-3. Open **Home.razor** and navigate to the `@code` section:
-   - Call the backend API using `HttpRequestMessage`, passing in the user query, product name, and description:
-     ```csharp
-     var request = new HttpRequestMessage(HttpMethod.Post, configuration["FashionAssistantAPI:Url"]);
-     request.Headers.Add(HeaderNames.Accept, "application/json");
+    ![Adding instructions for agent](./images/Exercise-4-agentinstructions.png)
 
-     var queryData = new Dictionary<string, string>
-     {
-         {"user_prompt", message},
-         {"product_name", selectedItem.Name},
-         {"product_description", selectedItem.Description }
-     };
-     ```
+2. Now add the OpenAPI Specified Tool by clicking **+ Add** next to **Actions**.
 
-   - Read and stream the response:
-     ```csharp
-     using (HttpResponseMessage responseMessage = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead))
-     {
-         responseMessage.EnsureSuccessStatusCode();
+    ![Location of button to add action tool](./images/Exercise-4-addtool.png)
 
-         if (responseMessage.Content is object)
-         {
-             using (Stream streamToReadFrom = await responseMessage.Content.ReadAsStreamAsync())
-             {
-                 using (StreamReader reader = new StreamReader(streamToReadFrom))
-                 {
-                     char[] buffer = new char[8192];
-                     int bytesRead;
-                     while ((bytesRead = await reader.ReadAsync(buffer, 0, buffer.Length)) > 0)
-                     {
-                         response += new string(buffer, 0, bytesRead);
-                         StateHasChanged();
-                     }
-                 }
-             }
-         }
-     }
-     ```
+3. Select **OpenAPI 3.0 specified tool**.
+4. Give your tool a **name** such as "agent1". 
+5. Give your tool the following **description**, which provides additional context to the agent to help it do its job.
 
-## Publishing the Frontend Application
-1. Right-lick on the `dotnetfashioassistant` project in Codespace select `Open in Integrated terminal`.
+    ```
+    This tool is used to interact with and manage an online fashion store. The tool can add or remove items from a shopping cart as well as view inventory.
+    ```
 
-  ![Context menu showing option to Open in integrated Terminal](./images/Exercise-4-integrated.jpg)
+6. Click **Next** and leave **Authentication method** as "Anonymous". There is no authentication on the provided sample web app or its API. If the app required an API key or managed identity to access it, this is where you would specify this information.
+7. Copy and paste your OpenAPI specification in the text box. The OpenAPI specification is provided in this repo under Exercise 5 and is called [swagger.json](../Exercise-4-AIAgent/webapp/swagger.json). Feel free to review the specification to understand what the provided API can do.
 
-2. To publish the web app, run the command in the opened terminal, run 
-  ```bash
-  dotnet publish -c Release -o ./bin/Publish
-  ```
+    ![OpenAPI specification location in repo](./images/Exercise-4-swaggerlocation.png)
 
-3. Right click on bin--> publish folder and select Deploy to WebApp option
+8. Before you create the tool, you need to copy and paste you app's URL into the OpenAPI specification you are providing to the tool. Replace the placeholder <APP-SERVICE-URL> on line 10 of the OpenAPI specification with your app's URL. It should be in the format *https://<app-name>.azurewebsites.net*. The screenshot below contains a sample URL. You need to use your app's URL, not the one shown in the screenshot. To find your app's URL, you can navigate back to your App Service app in the Azure portal in another tab so you don't lose your place with the agent setup. Or, if you already browsed to the app in another tab, you can just copy it from there.
 
-  ![Context menu showing option to Deploy web app](./images/Exercise-4-Deploy-1.jpg)
+    ![Location to paste App Service URL in OpenAPI specification](./images/Exercise-4-urllocation.png)
 
-4. Choose the `exercise4` app.
+9. Click **Create Tool** to finalize the agent setup.
 
-5. After deployment, wait a few minutes for the application to restart.
+## Step 3: Connect your agent to the App Service App
+After setting up the AI Agent and adding the OpenAPI Specified Tool, you need to configure your App Service with the appropriate environment variables.
+1. Go back to your App Service in the [Azure Portal](https://portal.azure.com).
+2. From the left menu, select **Environment variables**.
+3. In the **App settings** tab, click **+ Add** and add the following settings:
 
-## Exploring the Application
+    **Name**: AzureAIAgent__ConnectionString  
+    **Value**: The connection string you noted from your AI Agent Service
 
-Once the application is live, navigate to it and try asking questions like “Tell me more about this shirt” or “How do I pair this shirt?”
+4. Add another app setting:
 
-![Explore the deployed Application](./images/Exercise-4-answer.jpg)
----
+    **Name**: AzureAIAgent__AgentId  
+    **Value**: The Agent ID you noted when creating your agent
 
-End of Exercise 4.
+5. Click **Apply** at the bottom of the page and confirm when prompted. The app will restart with the new settings applied, and you can browse to the app again.
+
+> **NOTE**  
+> It may take up to 1 minute for the app to restart and pick up the app setting changes. If your app is not working, give it some time and then refresh the page to try again.
+
+## Step 4: Use the App
+Now that all of the supporting resources are created and updated, the app is ready for use. Ask the agent questions such as:
+- What's in my cart?
+- Add a small denim jacket to my cart
+- Do we have any blazers in stock?
+
+You can also ask general questions about the items and the agent should be able to provide information.
+- Tell me about Red Slim Fit Checked Casual Shirt
+- Is the blazer warm?
+
+If you want to prove that the agent is actually interacting with your app via the available APIs, you can go to your app's **Log stream** and review the activities. The log stream can be found in the Azure portal for your app. In the following screenshot, you can see the successful POST request to add an item to the cart. This action was taken by the agent, which was able to interpret the chat message and choose the appropriate API to complete the request.
+
+![Log stream and app view to verify agent ineraction with app](./images/Exercise-4-logstream.png)
