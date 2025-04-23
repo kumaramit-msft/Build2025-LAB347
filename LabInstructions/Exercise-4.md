@@ -16,7 +16,7 @@ In this exercise, you will connect an Azure AI Agent from the [Azure AI Agent Se
 ## Navigating to the Deployed Linux App Service
 1. Open a browser and go to [Azure Portal](https://portal.azure.com) using the credentials provided.
 2. Click on **App Service** in the top navigation bar.
-3. From the list of apps, click on **Exercise-5** application.
+3. From the list of apps, click on **Exercise-4** application.
 4. On the **Overview** page, you can view some properties of the app:
    - The app runs on **P0v3**.
    - This application is deployed with **.NET 8**.
@@ -45,7 +45,7 @@ In this exercise, you will connect an Azure AI Agent from the [Azure AI Agent Se
 
     ![Connection string location in Azure AI Foundry project](./images/Exercise-4-connstring.png)
 
-6. You are now going to create the agent. On the left-hand meny, click **Agents**.
+6. You are now going to create the agent. On the left-hand menu, click **Agents**.
     
     ![Agent creation experience location](./images/Exercise-4-agents.png)
 
@@ -76,11 +76,11 @@ In this exercise, you will connect an Azure AI Agent from the [Azure AI Agent Se
     ```
 
 6. Click **Next** and leave **Authentication method** as "Anonymous". There is no authentication on the provided sample web app or its API. If the app required an API key or managed identity to access it, this is where you would specify this information.
-7. Copy and paste your OpenAPI specification in the text box. The OpenAPI specification is provided in this repo under Exercise 5 and is called [swagger.json](../Exercise-4-AIAgent/webapp/swagger.json). Feel free to review the specification to understand what the provided API can do.
+7. Copy and paste your OpenAPI specification in the text box. The OpenAPI specification is provided in this repo under Exercise 4 and is called [swagger.json](../Exercise-4-AIAgent/webapp/swagger.json). Feel free to review the specification to understand what the provided API can do.
 
     ![OpenAPI specification location in repo](./images/Exercise-4-swaggerlocation.png)
 
-8. Before you create the tool, you need to copy and paste you app's URL into the OpenAPI specification you are providing to the tool. Replace the placeholder <APP-SERVICE-URL> on line 10 of the OpenAPI specification with your app's URL. It should be in the format *https://<app-name>.azurewebsites.net*. The screenshot below contains a sample URL. You need to use your app's URL, not the one shown in the screenshot. To find your app's URL, you can navigate back to your App Service app in the Azure portal in another tab so you don't lose your place with the agent setup. Or, if you already browsed to the app in another tab, you can just copy it from there.
+8. Before you create the tool, you need to copy and paste your app's URL into the OpenAPI specification you are providing to the tool. Replace the placeholder <APP-SERVICE-URL> on line 10 of the OpenAPI specification with your app's URL. It should be in the format `https://app-name.azurewebsites.net`. The screenshot below contains a sample URL. You need to use your app's URL, not the one shown in the screenshot. To find your app's URL, you can navigate back to your App Service app in the Azure portal in another tab so you don't lose your place with the agent setup. Or, if you already browsed to the app in another tab, you can just copy it from there.
 
     ![Location to paste App Service URL in OpenAPI specification](./images/Exercise-4-urllocation.png)
 
@@ -89,14 +89,14 @@ In this exercise, you will connect an Azure AI Agent from the [Azure AI Agent Se
 ## Step 2b (optional): Generate your own OpenAPI specification
 For this sample, the OpenAPI specification was provided. If you want to create your own OpenAPI specification, GitHub Copilot for VS Code can help with that. The following is an example of how you can prompt Copilot to generate the OpenAPI specification for you using Agent mode. The Azure AI Agent Service requires each operation to have an "operationId", so that is also mentioned in the prompt. 
 
-> **Note**  
+> **NOTE**  
 > You may need to make additional updates and revisions to the generated OpenAPI specification in order for the Azure AI Agent Service to accept it. This includes updating the URL as was done in the instructions above. For more information on the requirements, review the [provided sample](../Exercise-4-AIAgent/webapp/swagger.json) or go to the [documentation](https://learn.microsoft.com/azure/ai-services/agents/how-to/tools/openapi-spec?tabs=python&pivots=overview).
 
 ```
-Can you generate an OpenAPI specification for the the two controllers for inventory and cart actions? Include an operationId for each operation that clearly indicates what each operation does.
+Can you generate an OpenAPI specification for the two controllers for inventory and cart actions? Include an operationId for each operation that clearly indicates what each operation does.
 ```
 
-![Sample OpenAPI specification generation using GitHub Copliot for VS Code](./images/Exercise-4-openapispecgeneration.png)
+![Sample OpenAPI specification generation using GitHub Copilot for VS Code](./images/Exercise-4-openapispecgeneration.png)
 
 ## Step 3: Connect your agent to the App Service App
 After setting up the AI Agent and adding the OpenAPI Specified Tool, you need to configure your App Service with the appropriate environment variables.
@@ -129,4 +129,4 @@ You can also ask general questions about the items and the agent should be able 
 
 If you want to prove that the agent is actually interacting with your app via the available APIs, you can go to your app's **Log stream** and review the activities. The log stream can be found in the Azure portal for your app. In the following screenshot, you can see the successful POST request to add an item to the cart. This action was taken by the agent, which was able to interpret the chat message and choose the appropriate API to complete the request.
 
-![Log stream and app view to verify agent ineraction with app](./images/Exercise-4-logstream.png)
+![Log stream and app view to verify agent interaction with app](./images/Exercise-4-logstream.png)
