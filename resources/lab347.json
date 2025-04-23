@@ -16,13 +16,6 @@
             "defaultValue": "[concat('exercise2', uniqueString(resourceGroup().id))]",
             "type": "String"
         },
-        "sites_exercise4_name": {
-             "metadata":{
-            "description": "Name of the Web App for Exercise 4"
-             },
-            "defaultValue": "[concat('exercise4', uniqueString(resourceGroup().id))]",
-            "type": "String"
-        },
         "serverfarms_small_Build2025_HOL347_name": {
              "metadata":{
             "description": "Name of the App Service Plan for the small instances"
@@ -36,6 +29,13 @@
              },
             "defaultValue":"Build2025HOL347lg",
             "type":"String"
+        },
+        "storageaccount_Build2025_HOL347_name": {
+             "metadata":{
+            "description": "Name of the Storage Account"
+             },
+            "defaultValue": "[concat('hol347', uniqueString(resourceGroup().id))]",
+            "type": "String"
         },
         "accounts_Build2025_HOL347_name": {
              "metadata":{
@@ -55,7 +55,7 @@
              "metadata":{
             "description": "Name of the Application Insights instance"
              },
-            "defaultValue": "lab411appins",
+            "defaultValue": "lab347appins",
             "type": "String"
         },
         "RBAC_sites_exercise1_guid": {
@@ -76,10 +76,10 @@
              "metadata":{
             "description": "Region for the resources"
             },
-            "defaultValue": "West US 2",
+            "defaultValue": "North Europe",
             "allowedValues": [
-                    "West US 2",
                     "North Europe",
+                    "West US 2",
                     "East Asia",
                     "Southeast Asia"
             ],
@@ -193,28 +193,6 @@
                 }
             }
         },
-        // {
-        //     "type": "Microsoft.CognitiveServices/accounts/deployments",
-        //     "apiVersion": "2024-06-01-preview",
-        //     "name": "[concat(parameters('accounts_Build2025_HOL347_name'), '/gpt-4o')]",
-        //     "dependsOn": [
-        //         "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))]"
-        //     ],
-        //     "sku": {
-        //         "name": "GlobalStandard",
-        //         "capacity": 10
-        //     },
-        //     "properties": {
-        //         "model": {
-        //             "format": "OpenAI",
-        //             "name": "gpt-4o",
-        //             "version": "2024-05-13"
-        //         },
-        //         "versionUpgradeOption": "OnceNewDefaultVersionAvailable",
-        //         "currentCapacity": 10,
-        //         "raiPolicyName": "Microsoft.DefaultV2"
-        //     }
-        // },
         {
             "type": "Microsoft.Web/sites",
             "apiVersion": "2023-12-01",
@@ -323,68 +301,35 @@
             }
         },
         {
-            "type": "Microsoft.Web/sites",
-            "apiVersion": "2023-12-01",
-            "name": "[parameters('sites_exercise4_name')]",
-            "location": "[parameters('region')]",
+            "type": "Microsoft.Web/sites/sitecontainers",
+            "apiVersion": "2024-04-01",
+            "name": "[concat(parameters('sites_exercise1_name'), '/phi4-sidecar')]",
+            "location": "North Europe",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_large_Build2025_HOL347_name'))]"
+                "[resourceId('Microsoft.Web/sites', parameters('sites_exercise1_name'))]"
             ],
-            "kind": "app,linux",
-                        "identity": {
-                            "type": "SystemAssigned"
-                        },
             "properties": {
-                "enabled": true,
-                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_large_Build2025_HOL347_name'))]",
-                "reserved": true,
-                "isXenon": false,
-                "hyperV": false,
-                "dnsConfiguration": {},
-                "vnetRouteAllEnabled": false,
-                "vnetImagePullEnabled": false,
-                "vnetContentShareEnabled": false,
-                "siteConfig": {
-                    "numberOfWorkers": 1,
-                    "linuxFxVersion": "DOTNETCORE|8.0",
-                    "acrUseManagedIdentityCreds": false,
-                    "alwaysOn": true,
-                    "http20Enabled": false,
-                    "functionAppScaleLimit": 0,
-                    "minimumElasticInstanceCount": 0
-                },
-                "scmSiteAlsoStopped": false,
-                "clientAffinityEnabled": false,
-                "clientCertEnabled": false,
-                "clientCertMode": "Required",
-                "hostNamesDisabled": false,
-                "vnetBackupRestoreEnabled": false,
-                "containerSize": 0,
-                "dailyMemoryTimeQuota": 0,
-                "httpsOnly": true,
-                "redundancyMode": "None",
-                "publicNetworkAccess": "Enabled",
-                "storageAccountRequired": false,
-                "keyVaultReferenceIdentity": "SystemAssigned",
-                "inFlightFeatures": [
-                    "SiteContainers"
-                ]
+                "image": "mcr.microsoft.com/appsvc/docs/sidecars/sample-experiment:phi-4-q4-gguf",
+                "targetPort": "11434",
+                "isMain": false,
+                "authType": "Anonymous",
+                "volumeMounts": [],
+                "environmentVariables": []
             }
         },
         {
             "type": "Microsoft.Web/sites/sitecontainers",
             "apiVersion": "2024-04-01",
-            "name": "[concat(parameters('sites_exercise4_name'), '/phi3-sidecar')]",
-            "location": "[parameters('region')]",
+            "name": "[concat(parameters('sites_exercise2_name'), '/phi4-sidecar')]",
+            "location": "North Europe",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', parameters('sites_exercise4_name'))]"
+                "[resourceId('Microsoft.Web/sites', parameters('sites_exercise2_name'))]"
             ],
-            "properties":
-            {
-                "image": "mcr.microsoft.com/appsvc/docs/sidecars/sample-experiment:phi3-python-1.0",
-                "targetPort": "8000",
+            "properties": {
+                "image": "mcr.microsoft.com/appsvc/docs/sidecars/sample-experiment:phi-4-q4-gguf",
+                "targetPort": "11434",
                 "isMain": false,
-                "authType": "SystemAssigned",
+                "authType": "Anonymous",
                 "volumeMounts": [],
                 "environmentVariables": []
             }
@@ -413,18 +358,18 @@
                 "allow": false
             }
         },
-        {
-            "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
-            "apiVersion": "2023-12-01",
-            "name": "[concat(parameters('sites_exercise4_name'), '/ftp')]",
-            "location": "[parameters('region')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', parameters('sites_exercise4_name'))]"
-            ],
-            "properties": {
-                "allow": false
-            }
-        },
+        // {
+        //     "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
+        //     "apiVersion": "2023-12-01",
+        //     "name": "[concat(parameters('sites_exercise4_name'), '/ftp')]",
+        //     "location": "[parameters('region')]",
+        //     "dependsOn": [
+        //         "[resourceId('Microsoft.Web/sites', parameters('sites_exercise4_name'))]"
+        //     ],
+        //     "properties": {
+        //         "allow": false
+        //     }
+        // },
         {
             "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
             "apiVersion": "2023-12-01",
@@ -449,25 +394,28 @@
                 "allow": false
             }
         },
-        {
-            "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
-            "apiVersion": "2023-12-01",
-            "name": "[concat(parameters('sites_exercise4_name'), '/scm')]",
-            "location": "[parameters('region')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', parameters('sites_exercise4_name'))]"
-            ],
-            "properties": {
-                "allow": false
-            }
-        },
+        // {
+        //     "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
+        //     "apiVersion": "2023-12-01",
+        //     "name": "[concat(parameters('sites_exercise4_name'), '/scm')]",
+        //     "location": "[parameters('region')]",
+        //     "dependsOn": [
+        //         "[resourceId('Microsoft.Web/sites', parameters('sites_exercise4_name'))]"
+        //     ],
+        //     "properties": {
+        //         "allow": false
+        //     }
+        // },
         {
             "type": "Microsoft.Web/sites/config",
             "apiVersion": "2023-12-01",
             "name": "[concat(parameters('sites_exercise1_name'), '/web')]",
             "location": "[parameters('region')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', parameters('sites_exercise1_name'))]"
+                    "[resourceId('Microsoft.Web/sites', parameters('sites_exercise1_name'))]",
+                    "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageaccount_Build2025_HOL347_name'))]",
+                    "[resourceId('Microsoft.Storage/storageAccounts/queueServices', parameters('storageaccount_Build2025_HOL347_name'), 'default')]",
+                    "[resourceId('Microsoft.Storage/storageAccounts/queueServices/queues', parameters('storageaccount_Build2025_HOL347_name'), 'default','queue1')]"
             ],
             "properties": {
                 "numberOfWorkers": 1,
@@ -540,13 +488,17 @@
                 "minimumElasticInstanceCount": 0,
                 "azureStorageAccounts": {},
                 "appSettings": [
+                     {
+                         "name": "QUEUE_NAME",
+                         "value": "[resourceId('Microsoft.Storage/storageAccounts/queueServices/queues', parameters('storageaccount_Build2025_HOL347_name'), 'default', 'queue1')]"
+                     },
                     {
-                        "name": "ENDPOINT",
-                        "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))).endpoint]"
+                        "name": "STORAGE_ACCOUNT_NAME",
+                        "value": "[reference(parameters('storageaccount_Build2025_HOL347_name'))]"
                     },
                     {
-                        "name": "DEPLOYMENT_NAME",
-                        "value": "gpt-4o"
+                        "name": "WEBSITE_SKIP_RUNNING_KUDU_AGENT",
+                        "value": "false"
                     }
                 ]
             }
@@ -557,7 +509,10 @@
             "name": "[concat(parameters('sites_exercise2_name'), '/web')]",
             "location": "[parameters('region')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', parameters('sites_exercise2_name'))]"
+                "[resourceId('Microsoft.Web/sites', parameters('sites_exercise2_name'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageaccount_Build2025_HOL347_name'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts/queueServices', parameters('storageaccount_Build2025_HOL347_name'), 'default')]",
+                "[resourceId('Microsoft.Storage/storageAccounts/queueServices/queues', parameters('storageaccount_Build2025_HOL347_name'), 'default', 'queue1')]"
             ],
             "properties": {
                 "numberOfWorkers": 1,
@@ -631,110 +586,166 @@
                 "azureStorageAccounts": {},
                 "appSettings": [
                     {
-                        "name": "ENDPOINT",
-                        "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))).endpoint]"
+                         "name": "QUEUE_NAME",
+                         "value": "[resourceId('Microsoft.Storage/storageAccounts/queueServices/queues', parameters('storageaccount_Build2025_HOL347_name'), 'default', 'queue1')]"
                     },
                     {
-                        "name": "DEPLOYMENT_NAME",
-                        "value": "gpt-4o"
+                        "name": "STORAGE_ACCOUNT_NAME",
+                        "value": "[parameters('storageaccount_Build2025_HOL347_name')]"
+                    },
+                    {
+                        "name": "WEBSITE_SKIP_RUNNING_KUDU_AGENT",
+                        "value": "false"
                     }
                 ]
             }
         },
+        // {
+        //     "type": "Microsoft.Web/sites/config",
+        //     "apiVersion": "2023-12-01",
+        //     "name": "[concat(parameters('sites_exercise4_name'), '/web')]",
+        //     "location": "[parameters('region')]",
+        //     "dependsOn": [
+        //         "[resourceId('Microsoft.Web/sites', parameters('sites_exercise4_name'))]"
+        //     ],
+        //     "properties": {
+        //         "numberOfWorkers": 1,
+        //         "defaultDocuments": [
+        //             "Default.htm",
+        //             "Default.html",
+        //             "Default.asp",
+        //             "index.htm",
+        //             "index.html",
+        //             "iisstart.htm",
+        //             "default.aspx",
+        //             "index.php",
+        //             "hostingstart.html"
+        //         ],
+        //         "linuxFxVersion": "DOTNETCORE|8.0",
+        //         "requestTracingEnabled": false,
+        //         "remoteDebuggingEnabled": false,
+        //         "httpLoggingEnabled": false,
+        //         "acrUseManagedIdentityCreds": false,
+        //         "logsDirectorySizeLimit": 35,
+        //         "detailedErrorLoggingEnabled": false,
+        //         "publishingUsername": "REDACTED",
+        //         "scmType": "None",
+        //         "use32BitWorkerProcess": true,
+        //         "webSocketsEnabled": false,
+        //         "alwaysOn": true,
+        //         "managedPipelineMode": "Integrated",
+        //         "virtualApplications": [
+        //             {
+        //                 "virtualPath": "/",
+        //                 "physicalPath": "site\\wwwroot",
+        //                 "preloadEnabled": true
+        //             }
+        //         ],
+        //         "loadBalancing": "LeastRequests",
+        //         "experiments": {
+        //             "rampUpRules": []
+        //         },
+        //         "autoHealEnabled": false,
+        //         "vnetRouteAllEnabled": false,
+        //         "vnetPrivatePortsCount": 0,
+        //         "publicNetworkAccess": "Enabled",
+        //         "localMySqlEnabled": false,
+        //         "ipSecurityRestrictions": [
+        //             {
+        //                 "ipAddress": "Any",
+        //                 "action": "Allow",
+        //                 "priority": 2147483647,
+        //                 "name": "Allow all",
+        //                 "description": "Allow all access"
+        //             }
+        //         ],
+        //         "scmIpSecurityRestrictions": [
+        //             {
+        //                 "ipAddress": "Any",
+        //                 "action": "Allow",
+        //                 "priority": 2147483647,
+        //                 "name": "Allow all",
+        //                 "description": "Allow all access"
+        //             }
+        //         ],
+        //         "scmIpSecurityRestrictionsUseMain": false,
+        //         "http20Enabled": false,
+        //         "minTlsVersion": "1.2",
+        //         "scmMinTlsVersion": "1.2",
+        //         "ftpsState": "FtpsOnly",
+        //         "preWarmedInstanceCount": 0,
+        //         "elasticWebAppScaleLimit": 0,
+        //         "functionsRuntimeScaleMonitoringEnabled": false,
+        //         "minimumElasticInstanceCount": 0,
+        //         "azureStorageAccounts": {},
+        //         "appSettings": [
+        //             {
+        //                 "name": "ENDPOINT",
+        //                 "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))).endpoint]"
+        //             },
+        //             {
+        //                 "name": "DEPLOYMENT_NAME",
+        //                 "value": "gpt-4o"
+        //             },
+        //             {
+        //                 "name":"FashionAssistantAPI__Url",
+        //                 "value":"http://localhost:8000/predict"
+        //             }
+        //         ]
+        //     }
+        // },
         {
-            "type": "Microsoft.Web/sites/config",
-            "apiVersion": "2023-12-01",
-            "name": "[concat(parameters('sites_exercise4_name'), '/web')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2023-05-01",
+            "name": "[parameters('storageaccount_Build2025_HOL347_name')]",
             "location": "[parameters('region')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', parameters('sites_exercise4_name'))]"
-            ],
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "kind": "StorageV2",
             "properties": {
-                "numberOfWorkers": 1,
-                "defaultDocuments": [
-                    "Default.htm",
-                    "Default.html",
-                    "Default.asp",
-                    "index.htm",
-                    "index.html",
-                    "iisstart.htm",
-                    "default.aspx",
-                    "index.php",
-                    "hostingstart.html"
-                ],
-                "linuxFxVersion": "DOTNETCORE|8.0",
-                "requestTracingEnabled": false,
-                "remoteDebuggingEnabled": false,
-                "httpLoggingEnabled": false,
-                "acrUseManagedIdentityCreds": false,
-                "logsDirectorySizeLimit": 35,
-                "detailedErrorLoggingEnabled": false,
-                "publishingUsername": "REDACTED",
-                "scmType": "None",
-                "use32BitWorkerProcess": true,
-                "webSocketsEnabled": false,
-                "alwaysOn": true,
-                "managedPipelineMode": "Integrated",
-                "virtualApplications": [
-                    {
-                        "virtualPath": "/",
-                        "physicalPath": "site\\wwwroot",
-                        "preloadEnabled": true
-                    }
-                ],
-                "loadBalancing": "LeastRequests",
-                "experiments": {
-                    "rampUpRules": []
-                },
-                "autoHealEnabled": false,
-                "vnetRouteAllEnabled": false,
-                "vnetPrivatePortsCount": 0,
-                "publicNetworkAccess": "Enabled",
-                "localMySqlEnabled": false,
-                "ipSecurityRestrictions": [
-                    {
-                        "ipAddress": "Any",
-                        "action": "Allow",
-                        "priority": 2147483647,
-                        "name": "Allow all",
-                        "description": "Allow all access"
-                    }
-                ],
-                "scmIpSecurityRestrictions": [
-                    {
-                        "ipAddress": "Any",
-                        "action": "Allow",
-                        "priority": 2147483647,
-                        "name": "Allow all",
-                        "description": "Allow all access"
-                    }
-                ],
-                "scmIpSecurityRestrictionsUseMain": false,
-                "http20Enabled": false,
-                "minTlsVersion": "1.2",
-                "scmMinTlsVersion": "1.2",
-                "ftpsState": "FtpsOnly",
-                "preWarmedInstanceCount": 0,
-                "elasticWebAppScaleLimit": 0,
-                "functionsRuntimeScaleMonitoringEnabled": false,
-                "minimumElasticInstanceCount": 0,
-                "azureStorageAccounts": {},
-                "appSettings": [
-                    {
-                        "name": "ENDPOINT",
-                        "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))).endpoint]"
-                    },
-                    {
-                        "name": "DEPLOYMENT_NAME",
-                        "value": "gpt-4o"
-                    },
-                    {
-                        "name":"FashionAssistantAPI__Url",
-                        "value":"http://localhost:8000/predict"
-                    }
-                ]
+                "supportsHttpsTrafficOnly": true
             }
         },
+         {
+            "type": "Microsoft.Storage/storageAccounts/queueServices",
+            "apiVersion": "2024-01-01",
+            "name": "[concat(parameters('storageaccount_Build2025_HOL347_name'), '/default')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageaccount_Build2025_HOL347_name'))]"
+            ],
+            "properties": {
+                "cors": {
+                    "corsRules": []
+                }
+            }
+        },
+         {
+            "type": "Microsoft.Storage/storageAccounts/queueServices/queues",
+            "apiVersion": "2024-01-01",
+            "name": "[concat(parameters('storageaccount_Build2025_HOL347_name'), '/default/queue1')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/queueServices', parameters('storageaccount_Build2025_HOL347_name'), 'default')]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageaccount_Build2025_HOL347_name'))]"
+            ],
+            "properties": {
+                "metadata": {}
+            }
+        },
+         {
+            "type": "Microsoft.Storage/storageAccounts/queueServices/queues",
+            "apiVersion": "2024-01-01",
+            "name": "[concat(parameters('storageaccount_Build2025_HOL347_name'), '/default/queue2')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/queueServices', parameters('storageaccount_Build2025_HOL347_name'), 'default')]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageaccount_Build2025_HOL347_name'))]"
+            ],
+            "properties": {
+                "metadata": {}
+            }
+        },
+
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
@@ -760,6 +771,34 @@
             ],
             "properties":{
                 "roleDefinitionId": "[concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', 'a001fd3d-188f-4b5d-821b-7da978bf7442')]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('sites_exercise2_name')), '2019-08-01', 'full').identity.principalId]"
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "name": "[parameters('RBAC_sites_exercise1_guid')]",
+            "scope": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageaccount_Build2025_HOL347_name'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_exercise1_name'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageaccount_Build2025_HOL347_name'))]"
+            ],
+            "properties":{
+                "roleDefinitionId": "[concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', '974c5e8b-45b9-4653-ba55-5f855dd0fb88')]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('sites_exercise1_name')), '2019-08-01', 'full').identity.principalId]"
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "name": "[parameters('RBAC_sites_exercise2_guid')]",
+            "scope": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageaccount_Build2025_HOL347_name'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_exercise2_name'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageaccount_Build2025_HOL347_name'))]"
+            ],
+            "properties":{
+                "roleDefinitionId": "[concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', '974c5e8b-45b9-4653-ba55-5f855dd0fb88')]",
                 "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('sites_exercise2_name')), '2019-08-01', 'full').identity.principalId]"
             }
         }
