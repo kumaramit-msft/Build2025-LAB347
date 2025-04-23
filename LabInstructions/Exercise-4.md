@@ -11,6 +11,8 @@ In this exercise, you will connect an Azure AI Agent from the [Azure AI Agent Se
 1. App Service app with Fashion Store app deployed (provided)
 2. Azure AI Foundry Project (provided)
 
+<!-- TODO: if need to deploy the app, write up instructions and call out that you need to delete the .vscode/.azure configs so that the users don't get confused and deploy to the wrong app. -->
+
 ## Navigating to the Deployed Linux App Service
 1. Open a browser and go to [Azure Portal](https://portal.azure.com) using the credentials provided.
 2. Click on **App Service** in the top navigation bar.
@@ -83,6 +85,18 @@ In this exercise, you will connect an Azure AI Agent from the [Azure AI Agent Se
     ![Location to paste App Service URL in OpenAPI specification](./images/Exercise-4-urllocation.png)
 
 9. Click **Create Tool** to finalize the agent setup.
+
+## Step 2b (optional): Generate your own OpenAPI specification
+For this sample, the OpenAPI specification was provided. If you want to create your own OpenAPI specification, GitHub Copilot for VS Code can help with that. The following is an example of how you can prompt Copilot to generate the OpenAPI specification for you using Agent mode. The Azure AI Agent Service requires each operation to have an "operationId", so that is also mentioned in the prompt. 
+
+> **Note**  
+> You may need to make additional updates and revisions to the generated OpenAPI specification in order for the Azure AI Agent Service to accept it. This includes updating the URL as was done in the instructions above. For more information on the requirements, review the [provided sample](../Exercise-4-AIAgent/webapp/swagger.json) or go to the [documentation](https://learn.microsoft.com/azure/ai-services/agents/how-to/tools/openapi-spec?tabs=python&pivots=overview).
+
+```
+Can you generate an OpenAPI specification for the the two controllers for inventory and cart actions? Include an operationId for each operation that clearly indicates what each operation does.
+```
+
+![Sample OpenAPI specification generation using GitHub Copliot for VS Code](./images/Exercise-4-openapispecgeneration.png)
 
 ## Step 3: Connect your agent to the App Service App
 After setting up the AI Agent and adding the OpenAPI Specified Tool, you need to configure your App Service with the appropriate environment variables.
