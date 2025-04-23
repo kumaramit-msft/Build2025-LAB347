@@ -23,32 +23,32 @@
             "defaultValue": "[concat('exercise4', uniqueString(resourceGroup().id))]",
             "type": "String"
         },
-        "serverfarms_small_Ignite2024_HOL411_name": {
+        "serverfarms_small_Build2025_HOL347_name": {
              "metadata":{
             "description": "Name of the App Service Plan for the small instances"
              },
-            "defaultValue": "Ignite2024HOL411sm",
+            "defaultValue": "Build2025HOL347sm",
             "type": "String"
         },
-        "serverfarms_large_Ignite2024_HOL411_name":{
+        "serverfarms_large_Build2025_HOL347_name":{
              "metadata":{
             "description":"Name of the App Service Plan for the large instances"
              },
-            "defaultValue":"Ignite2024HOL411lg",
+            "defaultValue":"Build2025HOL347lg",
             "type":"String"
         },
-        "accounts_Ignite2024_HOL411_name": {
+        "accounts_Build2025_HOL347_name": {
              "metadata":{
             "description": "Name of the Azure Cognitive Services account"
              },
-            "defaultValue": "[concat('Ignite2024HOL411', uniqueString(resourceGroup().id))]",
+            "defaultValue": "[concat('Build2025HOL347', uniqueString(resourceGroup().id))]",
             "type": "String"
         },
         "workspace_name":{
              "metadata":{
             "description": "Name of the Log Analytics workspace"
              },
-            "defaultValue": "[concat('Ignite2024HOL411', '-workspace')]",
+            "defaultValue": "[concat('Build2025HOL347', '-workspace')]",
             "type": "String"
         },
         "appinsights_name":{
@@ -76,10 +76,12 @@
              "metadata":{
             "description": "Region for the resources"
             },
-            "defaultValue": "East Asia",
+            "defaultValue": "West US 2",
             "allowedValues": [
+                    "West US 2",
+                    "North Europe",
                     "East Asia",
-                    "West Central US"
+                    "Southeast Asia"
             ],
             "type": "String"
         },
@@ -105,7 +107,7 @@
         {
             "type": "Microsoft.CognitiveServices/accounts",
             "apiVersion": "2024-06-01-preview",
-            "name": "[parameters('accounts_Ignite2024_HOL411_name')]",
+            "name": "[parameters('accounts_Build2025_HOL347_name')]",
             "location": "[parameters('AzureAI_Region')]",
             "sku": {
                 "name": "S0"
@@ -113,7 +115,7 @@
             "kind": "OpenAI",
             "properties": {
                 "apiProperties": {},
-                "customSubDomainName":"[toLower(parameters('accounts_Ignite2024_HOL411_name'))]",
+                "customSubDomainName":"[toLower(parameters('accounts_Build2025_HOL347_name'))]",
                 "networkAcls": {
                     "defaultAction": "Allow",
                     "virtualNetworkRules": [],
@@ -125,7 +127,7 @@
         {
             "type": "Microsoft.Web/serverfarms",
             "apiVersion": "2023-12-01",
-            "name": "[parameters('serverfarms_small_Ignite2024_HOL411_name')]",
+            "name": "[parameters('serverfarms_small_Build2025_HOL347_name')]",
             "location": "[parameters('region')]",
             "sku": {
                 "name": "P1mv3",
@@ -148,13 +150,13 @@
                 "zoneRedundant": false
             },
             "dependsOn": [
-                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Ignite2024_HOL411_name'))]"
+                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))]"
             ]
         },
          {
             "type": "Microsoft.Web/serverfarms",
             "apiVersion": "2023-12-01",
-            "name": "[parameters('serverfarms_large_Ignite2024_HOL411_name')]",
+            "name": "[parameters('serverfarms_large_Build2025_HOL347_name')]",
             "location": "[parameters('region')]",
             "sku": {
                 "name": "P2mv3",
@@ -177,7 +179,7 @@
                 "zoneRedundant": false
             },
             "dependsOn": [
-                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Ignite2024_HOL411_name'))]"
+                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))]"
             ]
         },
         {
@@ -194,9 +196,9 @@
         {
             "type": "Microsoft.CognitiveServices/accounts/deployments",
             "apiVersion": "2024-06-01-preview",
-            "name": "[concat(parameters('accounts_Ignite2024_HOL411_name'), '/gpt-4o')]",
+            "name": "[concat(parameters('accounts_Build2025_HOL347_name'), '/gpt-4o')]",
             "dependsOn": [
-                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Ignite2024_HOL411_name'))]"
+                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))]"
             ],
             "sku": {
                 "name": "GlobalStandard",
@@ -219,7 +221,7 @@
             "name": "[parameters('sites_exercise1_name')]",
             "location": "[parameters('region')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_small_Ignite2024_HOL411_name'))]"
+                "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_small_Build2025_HOL347_name'))]"
             ],
             "kind": "app,linux",
             "identity": {
@@ -227,7 +229,7 @@
                         },
             "properties": {
                 "enabled": true,
-                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_small_Ignite2024_HOL411_name'))]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_small_Build2025_HOL347_name'))]",
                 "reserved": true,
                 "isXenon": false,
                 "hyperV": false,
@@ -265,7 +267,7 @@
             "name": "[parameters('sites_exercise2_name')]",
             "location": "[parameters('region')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_small_Ignite2024_HOL411_name'))]"
+                "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_small_Build2025_HOL347_name'))]"
             ],
             "kind": "app,linux",
                         "identity": {
@@ -273,7 +275,7 @@
                         },
             "properties": {
                 "enabled": true,
-                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_small_Ignite2024_HOL411_name'))]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_small_Build2025_HOL347_name'))]",
                 "reserved": true,
                 "isXenon": false,
                 "hyperV": false,
@@ -326,7 +328,7 @@
             "name": "[parameters('sites_exercise4_name')]",
             "location": "[parameters('region')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_large_Ignite2024_HOL411_name'))]"
+                "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_large_Build2025_HOL347_name'))]"
             ],
             "kind": "app,linux",
                         "identity": {
@@ -334,7 +336,7 @@
                         },
             "properties": {
                 "enabled": true,
-                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_large_Ignite2024_HOL411_name'))]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_large_Build2025_HOL347_name'))]",
                 "reserved": true,
                 "isXenon": false,
                 "hyperV": false,
@@ -541,7 +543,7 @@
                 "appSettings": [
                     {
                         "name": "ENDPOINT",
-                        "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Ignite2024_HOL411_name'))).endpoint]"
+                        "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))).endpoint]"
                     },
                     {
                         "name": "DEPLOYMENT_NAME",
@@ -632,7 +634,7 @@
                 "appSettings": [
                     {
                         "name": "ENDPOINT",
-                        "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Ignite2024_HOL411_name'))).endpoint]"
+                        "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))).endpoint]"
                     },
                     {
                         "name": "DEPLOYMENT_NAME",
@@ -723,7 +725,7 @@
                 "appSettings": [
                     {
                         "name": "ENDPOINT",
-                        "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Ignite2024_HOL411_name'))).endpoint]"
+                        "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))).endpoint]"
                     },
                     {
                         "name": "DEPLOYMENT_NAME",
@@ -740,10 +742,10 @@
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
             "name": "[parameters('RBAC_sites_exercise1_guid')]",
-            "scope": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Ignite2024_HOL411_name'))]",
+            "scope": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))]",
             "dependsOn": [
                 "[resourceId('Microsoft.Web/sites', parameters('sites_exercise1_name'))]",
-                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Ignite2024_HOL411_name'))]"
+                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))]"
             ],
             "properties":{
                 "roleDefinitionId": "[concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', 'a001fd3d-188f-4b5d-821b-7da978bf7442')]",
@@ -754,10 +756,10 @@
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
             "name": "[parameters('RBAC_sites_exercise2_guid')]",
-            "scope": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Ignite2024_HOL411_name'))]",
+            "scope": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))]",
             "dependsOn": [
                 "[resourceId('Microsoft.Web/sites', parameters('sites_exercise2_name'))]",
-                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Ignite2024_HOL411_name'))]"
+                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))]"
             ],
             "properties":{
                 "roleDefinitionId": "[concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', 'a001fd3d-188f-4b5d-821b-7da978bf7442')]",
