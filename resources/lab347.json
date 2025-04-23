@@ -193,28 +193,28 @@
                 }
             }
         },
-        {
-            "type": "Microsoft.CognitiveServices/accounts/deployments",
-            "apiVersion": "2024-06-01-preview",
-            "name": "[concat(parameters('accounts_Build2025_HOL347_name'), '/gpt-4o')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))]"
-            ],
-            "sku": {
-                "name": "GlobalStandard",
-                "capacity": 10
-            },
-            "properties": {
-                "model": {
-                    "format": "OpenAI",
-                    "name": "gpt-4o",
-                    "version": "2024-05-13"
-                },
-                "versionUpgradeOption": "OnceNewDefaultVersionAvailable",
-                "currentCapacity": 10,
-                "raiPolicyName": "Microsoft.DefaultV2"
-            }
-        },
+        // {
+        //     "type": "Microsoft.CognitiveServices/accounts/deployments",
+        //     "apiVersion": "2024-06-01-preview",
+        //     "name": "[concat(parameters('accounts_Build2025_HOL347_name'), '/gpt-4o')]",
+        //     "dependsOn": [
+        //         "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))]"
+        //     ],
+        //     "sku": {
+        //         "name": "GlobalStandard",
+        //         "capacity": 10
+        //     },
+        //     "properties": {
+        //         "model": {
+        //             "format": "OpenAI",
+        //             "name": "gpt-4o",
+        //             "version": "2024-05-13"
+        //         },
+        //         "versionUpgradeOption": "OnceNewDefaultVersionAvailable",
+        //         "currentCapacity": 10,
+        //         "raiPolicyName": "Microsoft.DefaultV2"
+        //     }
+        // },
         {
             "type": "Microsoft.Web/sites",
             "apiVersion": "2023-12-01",
@@ -482,7 +482,6 @@
                     "index.php",
                     "hostingstart.html"
                 ],
-                "netFrameworkVersion": "v4.0",
                 "linuxFxVersion": "DOTNETCORE|8.0",
                 "requestTracingEnabled": false,
                 "remoteDebuggingEnabled": false,
@@ -573,7 +572,6 @@
                     "index.php",
                     "hostingstart.html"
                 ],
-                "netFrameworkVersion": "v4.0",
                 "linuxFxVersion": "DOTNETCORE|8.0",
                 "requestTracingEnabled": false,
                 "remoteDebuggingEnabled": false,
@@ -664,7 +662,6 @@
                     "index.php",
                     "hostingstart.html"
                 ],
-                "netFrameworkVersion": "v4.0",
                 "linuxFxVersion": "DOTNETCORE|8.0",
                 "requestTracingEnabled": false,
                 "remoteDebuggingEnabled": false,
