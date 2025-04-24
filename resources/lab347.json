@@ -497,7 +497,7 @@
                         "value": "[reference(parameters('storageaccount_Build2025_HOL347_name'))]"
                     },
                     {
-                        "name": "WEBSITE_SKIP_RUNNING_KUDU_AGENT",
+                        "name": "WEBSITE_SKIP_RUNNING_KUDUAGENT",
                         "value": "false"
                     }
                 ]
@@ -594,7 +594,7 @@
                         "value": "[parameters('storageaccount_Build2025_HOL347_name')]"
                     },
                     {
-                        "name": "WEBSITE_SKIP_RUNNING_KUDU_AGENT",
+                        "name": "WEBSITE_SKIP_RUNNING_KUDUAGENT",
                         "value": "false"
                     }
                 ]
