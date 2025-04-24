@@ -58,20 +58,6 @@
             "defaultValue": "lab347appins",
             "type": "String"
         },
-        "RBAC_sites_exercise1_guid": {
-             "metadata":{
-            "description": "GUID for the RBAC assignment for Exercise 1"
-             },
-            "defaultValue": "[newGuid()]",
-            "type": "String"
-        },
-        "RBAC_sites_exercise2_guid": {
-             "metadata":{
-            "description": "GUID for the RBAC assignment for Exercise 2"
-            },
-            "defaultValue": "[newGuid()]",
-            "type": "String"
-        },
         "region": {
              "metadata":{
             "description": "Region for the resources"
