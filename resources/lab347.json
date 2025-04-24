@@ -750,7 +750,7 @@
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
-            "name": "[parameters('RBAC_sites_exercise1_guid')]",
+            "name": "guid(resourceGroup().id, principalId(), roleDefinitionId)",
             "scope": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))]",
             "dependsOn": [
                 "[resourceId('Microsoft.Web/sites', parameters('sites_exercise1_name'))]",
@@ -764,7 +764,7 @@
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
-            "name": "[parameters('RBAC_sites_exercise2_guid')]",
+            "name": "guid(resourceGroup().id, principalId(), roleDefinitionId)",
             "scope": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))]",
             "dependsOn": [
                 "[resourceId('Microsoft.Web/sites', parameters('sites_exercise2_name'))]",
@@ -778,7 +778,7 @@
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
-            "name": "[parameters('RBAC_sites_exercise1_guid')]",
+            "name": "guid(resourceGroup().id, principalId(), roleDefinitionId)",
             "scope": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageaccount_Build2025_HOL347_name'))]",
             "dependsOn": [
                 "[resourceId('Microsoft.Web/sites', parameters('sites_exercise1_name'))]",
@@ -792,7 +792,7 @@
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
-            "name": "[parameters('RBAC_sites_exercise2_guid')]",
+            "name": "guid(resourceGroup().id, principalId(), roleDefinitionId)",
             "scope": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageaccount_Build2025_HOL347_name'))]",
             "dependsOn": [
                 "[resourceId('Microsoft.Web/sites', parameters('sites_exercise2_name'))]",
