@@ -14,5 +14,11 @@ namespace devShopDNC.Models
         public String ProductDescription { get; set; } = string.Empty;
         public String ProductBrand { get; set; } = string.Empty;
         public String ProductColor { get; set; } = string.Empty;
+
+        public double AverageRating { get; set; } = 0.0;
+        public int ReviewCount { get; set; } = 0;
+        public string ReviewSummary { get; set; } = string.Empty;
+        public string ProductSentiment { get; set; } = string.Empty;
+        public string ReviewKeywords { get; set; } = string.Empty;
     }
 }

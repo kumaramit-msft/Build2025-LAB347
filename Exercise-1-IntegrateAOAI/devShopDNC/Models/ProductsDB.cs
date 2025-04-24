@@ -143,7 +143,12 @@ namespace devShopDNC.Models {
                             ProductImage = result["ProductImage"].ToString().Trim(),
                             ProductPrice = Convert.ToInt32(result["ProductPrice"]),
                             ProductDescription = result["ProductDescription"].ToString().Trim(),
-                            ProductGender = result["ProductGender"].ToString().Trim()
+                            ProductGender = result["ProductGender"].ToString().Trim(),
+                            AverageRating = result["average_rating"] != DBNull.Value ? Convert.ToDouble(result["average_rating"]) : 0.0,
+                            ReviewCount = result["review_count"] != DBNull.Value ? Convert.ToInt32(result["review_count"]) : 0,
+                            ReviewSummary = result["review_summary"]?.ToString() ?? string.Empty,
+                            ProductSentiment = result["product_sentiment"]?.ToString() ?? string.Empty,
+                            ReviewKeywords = result["review_keywords"]?.ToString() ?? string.Empty
                         };
                     }
                     return null;
@@ -328,5 +333,28 @@ namespace devShopDNC.Models {
         {
             throw new NotImplementedException();
         }
+
+        public int AddProductReview(int productId, int customerId, int rating, string reviewText)
+        {
+            using (var connection = new SqliteConnection(connString))
+            {
+                var command = new SqliteCommand(
+                    @"INSERT INTO DevShop_Product_Reviews (ProductID, CustomerID, rating, review_text) 
+              VALUES (@ProductID, @CustomerID, @Rating, @ReviewText);", connection);
+
+                command.Parameters.AddWithValue("@ProductID", productId);
+                command.Parameters.AddWithValue("@CustomerID", customerId);
+                command.Parameters.AddWithValue("@Rating", rating);
+                command.Parameters.AddWithValue("@ReviewText", reviewText ?? (object)DBNull.Value);
+
+                connection.Open();
+                command.ExecuteNonQuery();
+
+                // Retrieve the auto-generated review_id
+                var getIdCommand = new SqliteCommand("SELECT last_insert_rowid();", connection);
+                return Convert.ToInt32(getIdCommand.ExecuteScalar());
+            }
+        }
+
     }
 }
