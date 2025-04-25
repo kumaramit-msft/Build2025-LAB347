@@ -110,15 +110,17 @@ namespace ai_webjob
                 return (0, 0);
             }
 
+            #region receivemessagefromqueue
             var messages = (await queueClient.ReceiveMessagesAsync(maxMessages: 1, visibilityTimeout: TimeSpan.FromSeconds(5))).Value;
             if (messages.Length == 0)
             {
                 Console.WriteLine("[EXIT] No messages found in queue.");
                 return (0, 0);
             }
-
+            
             string messageText = messages[0].MessageText;
             await queueClient.DeleteMessageAsync(messages[0].MessageId, messages[0].PopReceipt);
+            #endregion
 
             try
             {
@@ -201,6 +203,7 @@ namespace ai_webjob
                 openAIClient = new AzureOpenAIClient(new Uri(endpoint), systemAssignedCredential);
             }
 
+            #region openaichatclient
             ChatClient client = openAIClient.GetChatClient(deployment);
 
             var messages = new ChatMessage[]
@@ -222,6 +225,7 @@ namespace ai_webjob
 
             ChatCompletion completion = client.CompleteChat(messages);
             string content = completion.Content[0].Text;
+            #endregion
 
             string summary = "";
             string sentiment = "unknown";

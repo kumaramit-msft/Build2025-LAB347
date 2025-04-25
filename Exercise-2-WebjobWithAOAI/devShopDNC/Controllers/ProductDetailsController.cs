@@ -88,7 +88,9 @@ namespace devShopDNC.Controllers
             var deployment = Environment.GetEnvironmentVariable("AZURE_OPENAI_DEPLOYMENT") ?? string.Empty;
             var mi_client_id = Environment.GetEnvironmentVariable("USER_ASSIGNED_MI_CLIENT_ID") ?? string.Empty;
 
+            #region openaichat
             AzureOpenAIClient openAIClient;
+
             if (!string.IsNullOrEmpty(mi_client_id))
             {
                 // User-Assigned Managed Identity should be added to the app and given access to the OpenAI resource as Cognitive Services OpenAI User.
@@ -105,6 +107,11 @@ namespace devShopDNC.Controllers
                 var systemAssignedCredential = new ManagedIdentityCredential();
                 openAIClient = new AzureOpenAIClient(new Uri(endpoint), systemAssignedCredential);
             }
+    
+            // Create a ChatClient using the AzureOpenAIClient
+            ChatClient chatClient = openAIClient.GetChatClient(deployment);
+            #endregion
+
 
             #region promptcontext
             // Retrieve product ID from session
@@ -121,9 +128,6 @@ namespace devShopDNC.Controllers
             string prompt = $"{userMessage} Product: {productName}. Description: {productDescription}";
 
             string messageContent = string.Empty;
-
-            // Create a ChatClient using the AzureOpenAIClient
-            ChatClient chatClient = openAIClient.GetChatClient(deployment);
             
             // Create a completion request
             ChatCompletion completion = chatClient.CompleteChat(

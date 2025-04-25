@@ -1,98 +1,88 @@
-# **Exercise 3: Leveraging the Sidecar Pattern on Linux App Service for Observability**
+# Exercise 3: Leverage local SLM as Sidecar for Webjob 
+In this exercise, you will use Webjobs with Local SLM (running as a Sidecar) for generating a summary of product reviews.
 
-In this exercise, you'll explore the power of the new [Sidecar pattern on Linux App Service](https://techcommunity.microsoft.com/t5/apps-on-azure-blog/a-glimpse-into-the-future-the-sidecar-pattern-on-linux-app/ba-p/4045680) by adding an OTEL (OpenTelemetry) sidecar to an existing .NET site. This sidecar will collect telemetry data and send it to Azure Application Insights, allowing you to monitor application performance and requests without modifying the application code. 
+**App Setup**
+- This App uses Azure Storage Queue leveraging [Web-Queue-Worker](https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/web-queue-worker) architecture to generate AI summary for new reviews using Webjobs as background process.
+- Go to #region localslmendpoint in Exercise-1-IntegrateAOAI\devShopDNC\Controllers\ReviewController.cs and see how local SLM endpoint is a url from localhost.
+- Go to #region publishreviewtoqueue in Exercise-1-IntegrateAOAI\devShopDNC\Controllers\ReviewController.cs and view how new review id is published to queue.
+- Go to #region localslmreceivemessagefromqueue in Exercise-3-WebjobWithLocalSLM/ai-webjob-LocalSLM\Program.cs and view how Webjob will pop the item from queue.
+- Go to #region loclslmopenaichatclient in Exercise-3-WebjobWithLocalSLM/ai-webjob-LocalSLM\Program.cs and view how Azure OpenAI SDK is used in webjob to get updated AI summary for the product based on existing summary and new review.
 
-The Sidecar pattern offers a streamlined and modular way to extend the functionality of Linux App Service, enabling effortless integration with Azure Native ISV Partners like [Datadog](https://azure.github.io/AppService/2024/07/26/Using-Datadog-with-Sidecar.html), [Dynatrace](https://azure.github.io/AppService/2024/07/26/Using-Dynatrace-with-Sidecar.html), New Relic, and Elastic. By the end of this exercise, you'll understand the fundamentals of configuring an OTEL sidecar and gain the foundational steps needed to integrate with additional observability solutions.
+**Azure Sign In**
+- If you have already signed in to Azure, you can skip this step and move to deploy webapp
+- Log into the provided Azure subscription in your environment using Azure CLI and on the Azure Portal using your credentials.
+- Review the App Service Plan and the Azure Open AI service pre-provisioned in your subscription
 
-This exercise not only illustrates a code-free observability enhancement but also demonstrates the flexibility and versatility of the Sidecar pattern, allowing your applications to scale and adapt with minimal friction.
+### Deploy webapp to Azure App Service
+- You can skip this step if you have already deployed the app from Exercise 1. Refer to the [Exercise 1 Lab Instructions](../Exercise-1.md#deploy-webapp-to-azure-app-service) for detailed steps on deploying the app.
+  
+### Run the webapp
+- Once deployed, click on the Browse button on the portal by going to the App Service web app view to view the web app
 
-## **Prerequisites**
-1. The .NET web application you deployed in Exercise 1.
-2. An Application Insights resource created and accessible within your Azure environment. 
+  ![Screenshot of website resource in Azure portal showing Browse option](./images/LAB347-ex1-browse-web.png)
+
+  ![Image showing Homepage of Dev Shop application](./images/LAB347-ex1-webui.png)
+
+### Enable Managed Identity
+
+- The below step can be skipped if you completed Exercise 1 & 2.
+
+- System Identity has been already enabled for your web app. To view, search for Identity on Settings menu. Under System Assigned tab, the Status will be set to **ON**. 
+
+ ![Identity settings in Azure Portal when viewing web app resource](./images/Exercise-1-SMI.png)
+
+- As a next step, on Azure Open AI Resource, web app "Role Assignment" has been set as Cognitive Services OpenAI Contributor.
+- For Storage account, web app "Role Assignment" has been set as Storage Queue Data Contributor. This is needed to publish and pop review data from Azure Storage Queue.
+
+### Add Local SLM as Sidecar Extension (THIS STEP IS ALREADY DONE FOR YOU IN THIS LAB)
+- Go to Deployment Center for your app on Azure Portal. Click on "Interested in adding containers .." banner
+ ![Sidecar banner](./images/LAB347-ex3-bannersidecar.png)
+
+ - Under Containers (new) tab, click on Add and choose "Sidecar Extension".
+ ![Sidecar banner](./images/LAB347-ex3-sidecarextension.png)
+
+  - Choose "AI: phi-4-q4-gguf (Experimental)" sidecar, put a name and click "Save".
+ ![Sidecar banner](./images/LAB347-ex3-phi4.png)
+
+ - Click "Refresh" and you will see Sidecar status as "Running"
+  ![Sidecar banner](./images/LAB347-ex3-phi4sidecar.png)
+
+- The Local SLM will start running in same network namespace as main app and will be reachable on http://localhost:11434
 
 
-## **Step 1: Retrieve the Application Insights Connection String**
-1. **Log in to the Azure Portal**  
-   Open the [Azure Portal](https://portal.azure.com/) and log in using the credentials provided for this lab.
+### Update Storage Queue details as App Settings (THIS STEP IS ALREADY DONE FOR YOU IN THIS LAB)
+- Add STORAGE_ACCOUNT_NAME and QUEUE_NAME as this is required for choosing appropriate Azure Storage Queue by WebApp and Webjob for communication.
+- Add WEBSITE_SKIP_RUNNING_KUDUAGENT as false, this is needed for running Webjobs.
+- Add SLM_ENDPOINT as http://localhost:11434/v1/
 
-2. **Navigate to the Resource Group**  
-   - In the top search bar, search for **"Resource Groups"**.
-   - Locate and click on the Resource Group where the resources for this lab are located.
+ ![Image showing All App Settings](./images/LAB347-ex3-appsettings.png)
 
-3. **Copy the Application Insights Connection String**  
-   - Within the Resource Group, find the **Application Insights** resource.
-   - Open the Application Insights resource, and under **Settings**, find and copy the **Connection String**. This will be used to link your application to Application Insights.
+### Add Local SLM based Webjob to WebApp 
+- Go to WebJobs on your app in Portal and Delete any existing WebJobs.
+- Go to your app on Azure Portal and click option to "Add" under WebJobs.
+ ![Add a new WebJob](./images/LAB347-ex3-webjob.png)
 
-    ![Connection String within Application Insights resource experience in Azure portal](./images/Exercise-3-AIConnectionString.jpg)
+- [Download local-slm-zip.zip](../Exercise-3-WebjobWithLocalSLM/ai-webjob-LocalSLM/local-slm-zip.zip)
 
-## **Step 2: Configure the Application Environment Variables**
-1. **Navigate to Your Web Application (Exercise 1 App)**  
-   Go to the application you deployed in Exercise 1.
+- Upload this webjob and choose to make it a Triggered (Scheduled one) with */5 * * * * * (run every 5 seconds) as the NCRONTAB expression.
 
-2. **Add the Application Insights Connection String**  
-   - Go to **Configuration** -> **Environment Variables**.
-   - Click **Add** to add a new environment variable:
-     - **Name**: `APPLICATIONINSIGHTS_CONNECTION_STRING`
-     - **Value**: Paste the connection string you copied from the Application Insights resource.
-   - Save the changes.
+ ![Add a new WebJob](./images/LAB347-ex3-webjoblocalslm.png)
 
-   ![Environment variables section within Azure portal view of web app resource where you can add/update/remove App Settings](./images/Exercise-3-appsetting.jpg)
+ - Once WebJob is added, refresh the page:
+ ![New WebJob on Portal](./images/LAB347-ex3-localslmwebjobadded.png)
 
-## **Step 3: Set Up the OTEL Sidecar Container**
-1. **Navigate to the Exercise-3 Folder in the Repository**  
-   In the repository used for this lab, go to the **Exercise-3** folder. This folder contains the files necessary for OTEL integration:
-   - `Dockerfile` - Contains the configuration for building the OTEL sidecar container.
-   - `otel-collector-config.yaml` - The configuration file for OTEL collector to send data to Application Insights.
-   - `startup.sh` - A script that downloads necessary OTEL instrumentation files for .NET applications.
+ - You are all setup now.
 
-2. **Review the Pre-Built OTEL Container Image**  
-   For this exercise, we have pre-built the OTEL sidecar container image for you. The image is available at:
-   ```
-   mcr.microsoft.com/appsvc/docs/sidecars/sample-experiment:otel-appinsights-1.0
-   ```
+### Run the entire setup
 
-## **Step 4: Deploy the OTEL Sidecar to Your Web App**
-1. **Navigate to Deployment Center**
-   - Go to the **Exercise 1 Web app** in the Azure portal.
-   - From the navigation pane on the left-hand, go to **Deployment Center**.
-   - You will see a banner saying `Interested on adding containers to run alongside you app? Click here to give it a try`. Click on the banner to see the tab to add Containers.
+- Go to WebApp, and choose any product.
+- See the current AI summary and avr rating of product.
+  ![New WebJob on Portal](./images/LAB347-ex2-currentaisummary.png)
 
-2. **Add the OTEL Sidecar Container**
-   - Under the **Containers (New)** tab, click **Add** to add a new container.
-   - Fill in the following information:
-     - **Image Source**: Other container registries
-     - **Image Type**: Public
-     - **Registry Server URL**: Enter `https://mcr.microsoft.com`
-     - **Image and Tag**: Enter `appsvc/docs/sidecars/sample-experiment:otel-appinsights-1.0`
-     - **Port**: Set to `4317` (the default port used by OTEL for exporting telemetry data).
-   - Click Apply to save the settings.
+ - Add a review
+  ![New WebJob on Portal](./images/LAB347-ex2-addnegativereview.png)
 
-     ![Edit container settings within web app resource in Azure portal](./images/Exercise-3-AddContainer.jpg)
+- Reload app page and see the udpated summary.
+ ![New WebJob on Portal](./images/LAB347-ex2-updatedreview.png)
 
-## **Step 5: Set the Startup Command**
-1. **Go to Configuration**
-   - Navigate to the **Configuration** section in the Azure portal for your web application.
-
-2. **Add the Startup Command**
-   - In **Startup Command**, enter:
-     ```
-     /home/site/wwwroot/startup.sh
-     ```
-   - This command will run `startup.sh`, which downloads the necessary OTEL instrumentation files for .NET applications.
-
-   ![Configure startup command in configuration section of web app resource in Azure portal](./images/Exercise-3-Config.jpg)
-
-3. **Save and Restart the Application**  
-   - Save the changes. The application may take a minute to restart as it loads the OTEL sidecar container.
-
-## **Step 6: Verify Observability in Application Insights**
-1. **Browse the Application**  
-   - After the application restarts, open it and navigate through a few pages to generate some telemetry data.
-
-2. **View Data in Application Insights**  
-   - Return to the Application Insights resource in the Azure portal.
-   - On the Overview page, you should now see the telemetry data reflecting the requests and interactions captured by the OTEL sidecar, giving you deeper insights into application performance.
-
-   ![Application Insights overview in Azure portal](./images/Exercise-3-AppInsights.jpg)
-
----
+ - You an also check WebJob logs by clicking on logs link under WebJobs blade on Portal.

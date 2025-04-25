@@ -82,6 +82,7 @@ namespace devShopDNC.Controllers
                 {
                     try
                     {
+                        #region publishreviewtoqueue
                         var messagePayload = new
                         {
                             productId = model.ProductID,
@@ -91,6 +92,7 @@ namespace devShopDNC.Controllers
                         string messageText = JsonSerializer.Serialize(messagePayload);
                         _queueClient.SendMessage(messageText);
                         Console.WriteLine($"Product and review added to queue: {messageText}");
+                        #endregion 
                     }
                     catch (Exception ex)
                     {

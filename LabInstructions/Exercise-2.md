@@ -1,19 +1,11 @@
-# Exercise 2: Leverage Semantic Kernel to integrate with Azure OpenAI
-In this exercise, you will use Semantic Kernel to integrate with Azure OpenAI. Using [Semantic Kernel](https://learn.microsoft.com/en-us/semantic-kernel/get-started/quick-start-guide?pivots=programming-language-csharp) can significantly enhance your AI application's capabilities by providing a unified interface, advanced orchestration, memory management, and robust error handling. It simplifies the integration process and ensures your application is scalable, secure, and resilient.
+# Exercise 2: Leverage Azure OpenAI SDK based Webjob
+In this exercise, you will use Webjobs with OpenAI for generating a summary of product reviews.
 
-**Semantic Kernel client setup**
-- Go to #region SemanticKernel in Exercise-2\devShopDNC\Controllers\ProductDetailsController.cs and view the kernel client settings
-- AddAzureOpenAIChatCompletion method is used to configure Semantic Kernel to use Azure OpenAI's Chat Completion service with AOAI endpoint, deployment name and default Azure credentials to use System Managed to connect to Azure OpenAI. 
-
-**Prompt Execution Settings**
-- Using PromptExecutionSettings parameters, you can control various aspects of how AI generates the model responses making it easier to tailor the AI's output to your specific needs.
-    - Temperature: Controls the randomness of the generated text. Lower values make the output more deterministic, while higher values make it more creative.
-    - MaxTokens: Specifies the maximum number of tokens (words or parts of words) in the generated response.
-    - TopP: Controls the cumulative probability for token selection. It is used for nucleus sampling, where the model considers only the tokens with the highest probabilities that add up to TopP.
-
-**Maintain State**
-- Azure Open AI responses are stateless. Maintaining a chat history is crucial for providing context to the AI model, enabling it to generate more coherent and contextually relevant responses.
-- Go to #region ChatHistory in Exercise-2\devShopDNC\Controllers\ProductDetailsController.cs to view the prompts and responses are maintained 
+**App Setup**
+- This App uses Azure Storage Queue leveraging [Web-Queue-Worker](https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/web-queue-worker) architecture to generate AI summary for new reviews using Webjobs as background process.
+- Go to #region publishreviewtoqueue in Exercise-1-IntegrateAOAI\devShopDNC\Controllers\ReviewController.cs and view how new review id is published to queue.
+- Go to #region receivemessagefromqueue in Exercise-2-WebjobWithAOAI\ai-webjob-AOAI\Program.cs and view how Webjob will pop the item from queue.
+- Go to #region openaichatclient in Exercise-2-WebjobWithAOAI\ai-webjob-AOAI\Program.cs and view how Azure OpenAI SDK is used in webjob to get updated AI summary for the product based on existing summary and new review.
 
 **Azure Sign In**
 - If you have already signed in to Azure, you can skip this step and move to deploy webapp
@@ -21,70 +13,60 @@ In this exercise, you will use Semantic Kernel to integrate with Azure OpenAI. U
 - Review the App Service Plan and the Azure Open AI service pre-provisioned in your subscription
 
 ### Deploy webapp to Azure App Service
-- Right click on devshopDNC.csproj from Exercise 2 folder and select Open In Integrated Terminalaz login
-
-  ![Context menu showing option to Open in integrated Terminal](./images/Exercise-1-terminal.png)
-
-- To publish the web app, run the command in the opened terminal, run dotnet publish -c Release -o ./bin/Publish
-- Right click on bin--> publish folder and select Deploy to webApp option
-  
-  
-- Press Deploy
-  
-  ![Warning message asking if you're sure you want to deploy](./images/Exercise-1-deploy.png)
-
-- Select the already existing webapp
-  
-  ![List of resources to select from](./images/Exercise-1-resource-select.png)
+- You can skip this step if you have already deployed the app from Exercise 1. Refer to the [Exercise 1 Lab Instructions](../Exercise-1.md#deploy-webapp-to-azure-app-service) for detailed steps on deploying the app.
   
 ### Run the webapp
 - Once deployed, click on the Browse button on the portal by going to the App Service web app view to view the web app
-  
-  ![Screenshot of website resource in Azure portal showing Browse option](./images/Exercise-1-browse-web.png)
 
-  ![Image showing Homepage of Dev Shop application](./images/Exercise-1-webui.png.png)
+  ![Screenshot of website resource in Azure portal showing Browse option](./images/LAB347-ex1-browse-web.png)
+
+  ![Image showing Homepage of Dev Shop application](./images/LAB347-ex1-webui.png)
 
 ### Enable Managed Identity
 
-- The below step can be skipped if you completed Exercise 1
+- The below step can be skipped if you completed Exercise 1, you can check last item in this section for Storage account role assignment.
 
 - System Identity has been already enabled for your web app. To view, search for Identity on Settings menu. Under System Assigned tab, the Status will be set to **ON**. 
 
  ![Identity settings in Azure Portal when viewing web app resource](./images/Exercise-1-SMI.png)
 
-- As a next step, on Azure Open AI Resource, web app  "Role Assignment" has been set as Cognitive Services OpenAI Contributor.
+- As a next step, on Azure Open AI Resource, web app "Role Assignment" has been set as Cognitive Services OpenAI Contributor.
+- **[NEW]** For Storage account, web app "Role Assignment" has been set as Storage Queue Data Contributor. This will be needed to publish and pop review data from Azure Storage Queue.
 
 ### Connect to Azure Open AI
+- You can skip this step if you have already connected the app from Exercise 1. Refer to the [Exercise 1 Lab Instructions](../Exercise-1.md#connect-to-azure-open-ai) for detailed steps.
 
-Now, the website is up and running. Lets connect with Azure OpenAI to get the Chat with AI Assistant integrated to the web app 
+### Update Storage Queue details as App Settings (THIS STEP IS ALREADY DONE FOR YOU IN THIS LAB)
+- Add STORAGE_ACCOUNT_NAME and QUEUE_NAME as this is required for choosing appropriate Azure Storage Queue by WebApp and Webjob for communication.
+- Add WEBSITE_SKIP_RUNNING_KUDUAGENT as false, this is needed for running Webjobs.
 
-Add these appsettings to App Service web app.
+ ![Image showing All App Settings](./images/LAB347-ex2-appsettings.png)
 
-- The below step can be skipped if you completed Exercise 1
+### Add OpenAI based Webjob to WebApp 
+- Go to your app on Azure Portal and click option to "Add" under WebJobs.
+ ![Add a new WebJob](./images/LAB347-ex2-webjob.png)
 
-- Go to Azure Open AI on the portal and open it in Azure AI Studio
-  
- ![Azure Open AI resource in Azure portal](./images/Exercise-1-openai.png)
+- [Download openai-webjob.zip](../Exercise-2-WebjobWithAOAI/ai-webjob-AOAI/openai-webjob.zip)
 
-- Deploy the gpt-4o model by going to Deployments and select gpt-4o Chat completion model and click Confirm
+- Upload this webjob and choose to make it a Triggered (Scheduled one) with */5 * * * * * (run every 5 seconds) as the NCRONTAB expression.
 
- ![Azure AI Studio screenshot showing model Deployments](./images/Exercise-1-deploymodel.png)
+ ![Add a new WebJob](./images/LAB347-ex2-webjobopenai.png)
 
-- Give the deployment name and select deployment type as "Global Standard"
+ - Once WebJob is added, refresh the page:
+ ![New WebJob on Portal](./images/LAB347-ex2-webjobopenaiadded.png)
 
- ![Deploy model settings](./images/Exercise-1-gpt4o.png)
+ - You are all setup now.
 
-- Switch back to the App Service configuration blade. Add the environment variables DEPLOYMENT_NAME and ENDPOINT. For ENDPOINT value, use TargetUri and for DEPLOYMENT_NAME value, use deployment name retrieved from the above step 
+### Run the entire setup
 
- ![Environment variables section within Azure portal view of web app resource](./images/Exercise-1-envvar.png)
+- Go to WebApp, and choose any product.
+- See the current AI summary and avr rating of product.
+  ![New WebJob on Portal](./images/LAB347-ex2-currentaisummary.png)
 
-### Chat with AI Assistant
-- Go to Clothing tab and select a product. 
-- Click on **Chat with AI Assistant** and give an user message like "tell me more about the formal blazer"
-- You should receive a chat response from the OpenAI model 
+ - Add a review
+  ![New WebJob on Portal](./images/LAB347-ex2-addnegativereview.png)
 
-  
-### Monitor the webapp
-To monitor your web app, you can leverage the LogStream option under Monitoring section on the webapp portal view.
+- Reload app page and see the udpated summary.
+ ![New WebJob on Portal](./images/LAB347-ex2-updatedreview.png)
 
- ![Log stream experience for the web app in Azure portal](./images/Exercise-1-logs.png)
+ - You an also check WebJob logs by clicking on logs link under WebJobs blade on Portal.

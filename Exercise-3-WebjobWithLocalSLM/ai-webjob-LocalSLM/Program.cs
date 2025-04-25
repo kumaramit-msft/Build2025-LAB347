@@ -110,6 +110,7 @@ namespace ai_webjob
                 return (0, 0);
             }
 
+            #region localslmreceivemessagefromqueue
             var messages = (await queueClient.ReceiveMessagesAsync(maxMessages: 1, visibilityTimeout: TimeSpan.FromSeconds(5))).Value;
             if (messages.Length == 0)
             {
@@ -119,6 +120,7 @@ namespace ai_webjob
 
             string messageText = messages[0].MessageText;
             await queueClient.DeleteMessageAsync(messages[0].MessageId, messages[0].PopReceipt);
+            #endregion
 
             try
             {
@@ -171,7 +173,9 @@ namespace ai_webjob
         {
             Console.WriteLine($"Using Local SLM for summarization");
 
+            #region localslmendpoint
             var endpoint = Environment.GetEnvironmentVariable("SLM_AI_ENDPOINT") ?? "http://localhost:11434/v1/";
+            #endregion
 
             Console.WriteLine($"Using SLM Endpoint: {endpoint}");
 
@@ -180,6 +184,7 @@ namespace ai_webjob
                 Endpoint = new Uri(endpoint),
             });
 
+            #region loclslmopenaichatclient
             ChatClient client = openAIClient.GetChatClient("phi4");
 
             var messages = new ChatMessage[]
@@ -200,6 +205,7 @@ namespace ai_webjob
             };
 
             ChatCompletion completion = client.CompleteChat(messages);
+            #endregion
 
             string content = completion.Content[0].Text;
 
