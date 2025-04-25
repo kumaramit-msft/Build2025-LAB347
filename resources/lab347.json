@@ -38,13 +38,7 @@
             "defaultValue": "[concat('Build2025HOL347', uniqueString(resourceGroup().id))]",
             "type": "String"
         },
-        "workspace_name":{
-             "metadata":{
-            "description": "Name of the Log Analytics workspace"
-             },
-            "defaultValue": "[concat('Build2025HOL347', '-workspace')]",
-            "type": "String"
-        },
+
         "AIFoundry_AIService_Build2025_HOL347_name": {
                 "metadata":{
                 "description": "Name of the AI Service Account which support the AI Foundry Hub Resource"
