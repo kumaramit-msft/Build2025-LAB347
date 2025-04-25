@@ -182,8 +182,8 @@
         }
     },
     "variables": {
-        "exercise1_principalId": "resourceId('Microsoft.Web/sites', parameters('sites_exercise1_name')), '2019-08-01', 'full').identity.principalId",
-        "exercise2_principalId": "resourceId('Microsoft.Web/sites', parameters('sites_exercise2_name')), '2019-08-01', 'full').identity.principalId"
+        "app1_principalId": "resourceId('Microsoft.Web/sites', parameters('sites_app1_name')), '2019-08-01', 'full').identity.principalId",
+        "app2_principalId": "resourceId('Microsoft.Web/sites', parameters('sites_app2_name')), '2019-08-01', 'full').identity.principalId"
     },
     "resources": [
         {
@@ -220,7 +220,7 @@
             "properties": {
                 "model": {
                     "format": "OpenAI",
-                    "name": "gpt-4o0mini",
+                    "name": "gpt-4o-mini",
                     "version": "2024-07-18"
                 },
                 "versionUpgradeOption": "OnceNewDefaultVersionAvailable",
@@ -819,7 +819,7 @@
                 },
                 "enabledForDeployment":false,
                 "enabledForTemplateDeployment": true,
-                "enableSoftDelete": true,
+                "enableSoftDelete": false,
                 "softDeleteRetentionInDays": 90,
                 "enableRbacAuthorization": true
             }
@@ -921,7 +921,7 @@
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
-            "name": "[guid(resourceGroup().id, variables('exercise1_principalId'), concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', 'a001fd3d-188f-4b5d-821b-7da978bf7442'))]",
+            "name": "[guid(resourceGroup().id, variables('app1_principalId'), concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', 'a001fd3d-188f-4b5d-821b-7da978bf7442'))]",
             "scope": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))]",
             "dependsOn": [
                 "[resourceId('Microsoft.Web/sites', parameters('sites_app1_name'))]",
@@ -935,7 +935,7 @@
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
-            "name": "[guid(resourceGroup().id, variables('exercise2_principalId'), concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', 'a001fd3d-188f-4b5d-821b-7da978bf7442'))]",
+            "name": "[guid(resourceGroup().id, variables('app2_principalId'), concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', 'a001fd3d-188f-4b5d-821b-7da978bf7442'))]",
             "scope": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))]",
             "dependsOn": [
                 "[resourceId('Microsoft.Web/sites', parameters('sites_app2_name'))]",
@@ -949,7 +949,7 @@
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
-            "name": "[guid(resourceGroup().id, variables('exercise1_principalId'), concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', '974c5e8b-45b9-4653-ba55-5f855dd0fb88'))]",
+            "name": "[guid(resourceGroup().id, variables('app1_principalId'), concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', '974c5e8b-45b9-4653-ba55-5f855dd0fb88'))]",
             "scope": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageaccount_Build2025_HOL347_name'))]",
             "dependsOn": [
                 "[resourceId('Microsoft.Web/sites', parameters('sites_app1_name'))]",
@@ -963,7 +963,7 @@
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
-            "name": "[guid(resourceGroup().id, variables('exercise2_principalId'), concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', '974c5e8b-45b9-4653-ba55-5f855dd0fb88'))]",
+            "name": "[guid(resourceGroup().id, variables('app2_principalId'), concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', '974c5e8b-45b9-4653-ba55-5f855dd0fb88'))]",
             "scope": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageaccount_Build2025_HOL347_name'))]",
             "dependsOn": [
                 "[resourceId('Microsoft.Web/sites', parameters('sites_app2_name'))]",
