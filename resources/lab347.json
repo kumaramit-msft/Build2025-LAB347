@@ -16,20 +16,14 @@
             "defaultValue": "[concat('exercise2', uniqueString(resourceGroup().id))]",
             "type": "String"
         },
-        "serverfarms_small_Build2025_HOL347_name": {
+        "serverfarm_Build2025_HOL347_name": {
              "metadata":{
-            "description": "Name of the App Service Plan for the small instances"
+            "description": "Name of the App Service Plan for the Lab"
              },
-            "defaultValue": "Build2025HOL347sm",
+            "defaultValue": "Build2025HOL347asp",
             "type": "String"
         },
-        "serverfarms_large_Build2025_HOL347_name":{
-             "metadata":{
-            "description":"Name of the App Service Plan for the large instances"
-             },
-            "defaultValue":"Build2025HOL347lg",
-            "type":"String"
-        },
+
         "storageaccount_Build2025_HOL347_name": {
              "metadata":{
             "description": "Name of the Storage Account"
@@ -228,36 +222,7 @@
         {
             "type": "Microsoft.Web/serverfarms",
             "apiVersion": "2023-12-01",
-            "name": "[parameters('serverfarms_small_Build2025_HOL347_name')]",
-            "location": "[parameters('region')]",
-            "sku": {
-                "name": "P1mv3",
-                "tier": "PremiumMV3",
-                "size": "P1mv3",
-                "family": "Pmv3",
-                "capacity": 1
-            },
-            "kind": "linux",
-            "properties": {
-                "perSiteScaling": false,
-                "elasticScaleEnabled": false,
-                "maximumElasticWorkerCount": 1,
-                "isSpot": false,
-                "reserved": true,
-                "isXenon": false,
-                "hyperV": false,
-                "targetWorkerCount": 0,
-                "targetWorkerSizeId": 0,
-                "zoneRedundant": false
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))]"
-            ]
-        },
-         {
-            "type": "Microsoft.Web/serverfarms",
-            "apiVersion": "2023-12-01",
-            "name": "[parameters('serverfarms_large_Build2025_HOL347_name')]",
+            "name": "[parameters('serverfarm_Build2025_HOL347_name')]",
             "location": "[parameters('region')]",
             "sku": {
                 "name": "P2mv3",
@@ -300,7 +265,7 @@
             "name": "[parameters('sites_exercise1_name')]",
             "location": "[parameters('region')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_small_Build2025_HOL347_name'))]"
+                "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarm_Build2025_HOL347_name'))]"
             ],
             "kind": "app,linux",
             "identity": {
@@ -308,7 +273,7 @@
                         },
             "properties": {
                 "enabled": true,
-                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_small_Build2025_HOL347_name'))]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarm_Build2025_HOL347_name'))]",
                 "reserved": true,
                 "isXenon": false,
                 "hyperV": false,
@@ -346,7 +311,7 @@
             "name": "[parameters('sites_exercise2_name')]",
             "location": "[parameters('region')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_small_Build2025_HOL347_name'))]"
+                "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarm_Build2025_HOL347_name'))]"
             ],
             "kind": "app,linux",
                         "identity": {
@@ -354,7 +319,7 @@
                         },
             "properties": {
                 "enabled": true,
-                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_small_Build2025_HOL347_name'))]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarm_Build2025_HOL347_name'))]",
                 "reserved": true,
                 "isXenon": false,
                 "hyperV": false,
