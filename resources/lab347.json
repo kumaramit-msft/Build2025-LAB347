@@ -45,13 +45,6 @@
             "defaultValue": "[concat('Build2025HOL347', '-workspace')]",
             "type": "String"
         },
-        "appinsights_name":{
-             "metadata":{
-            "description": "Name of the Application Insights instance"
-             },
-            "defaultValue": "lab347appins",
-            "type": "String"
-        },
         "AIFoundry_AIService_Build2025_HOL347_name": {
                 "metadata":{
                 "description": "Name of the AI Service Account which support the AI Foundry Hub Resource"
@@ -249,17 +242,6 @@
             ]
         },
         {
-            "apiVersion": "2023-09-01",
-            "name": "[parameters('workspace_name')]",
-            "location": "[parameters('region')]",
-            "type": "Microsoft.OperationalInsights/workspaces",
-            "properties": {
-                "sku": {
-                    "name": "pergb2018"
-                }
-            }
-        },
-        {
             "type": "Microsoft.Web/sites",
             "apiVersion": "2023-12-01",
             "name": "[parameters('sites_app1_name')]",
@@ -349,21 +331,6 @@
                 "publicNetworkAccess": "Enabled",
                 "storageAccountRequired": false,
                 "keyVaultReferenceIdentity": "SystemAssigned"
-            }
-        },
-        {
-            "apiVersion": "2020-02-02-preview",
-            "name": "[parameters('appinsights_name')]",
-            "type": "microsoft.insights/components",
-            "location": "[parameters('region')]",
-            "tags": {},
-            "dependsOn": [
-                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspace_name'))]"
-            ],
-            "properties": {
-                "Flow_Type": "Redfield",
-                "Application_Type": "web",
-                "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspace_name'))]"
             }
         },
         {
