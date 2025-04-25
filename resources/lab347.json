@@ -213,6 +213,28 @@
             }
         },
         {
+            "type": "Microsoft.CognitiveServices/accounts/deployments",
+            "apiVersion": "2024-06-01-preview",
+            "name": "[concat(parameters('accounts_Build2025_HOL347_name'), '/gpt-4o-mini')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))]"
+            ],
+            "sku": {
+                "name": "GlobalStandard",
+                "capacity": 10
+            },
+            "properties": {
+                "model": {
+                    "format": "OpenAI",
+                    "name": "gpt-4o0mini",
+                    "version": "2024-07-18"
+                },
+                "versionUpgradeOption": "OnceNewDefaultVersionAvailable",
+                "currentCapacity": 10,
+                "raiPolicyName": "Microsoft.DefaultV2"
+            }
+        },
+        {
             "type": "Microsoft.Web/serverfarms",
             "apiVersion": "2023-12-01",
             "name": "[parameters('serverfarm_Build2025_HOL347_name')]",
@@ -482,7 +504,7 @@
                 "appSettings": [
                      {
                          "name": "QUEUE_NAME",
-                         "value": "[resourceId('Microsoft.Storage/storageAccounts/queueServices/queues', parameters('storageaccount_Build2025_HOL347_name'), 'default', 'queue1')]"
+                         "value": "queue1"
                      },
                     {
                         "name": "STORAGE_ACCOUNT_NAME",
@@ -491,6 +513,14 @@
                     {
                         "name": "WEBSITE_SKIP_RUNNING_KUDUAGENT",
                         "value": "false"
+                    },
+                    {
+                        "name": "AZURE_OPENAI_ENDPOINT",
+                        "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))).endpoint]"
+                    },
+                    {
+                        "name": "AZURE_OPENAI_DEPLOYMENT",
+                        "value": "gpt-4o-mini"
                     }
                 ]
             }
