@@ -12,7 +12,7 @@ In this exercise, you will connect an Azure AI Agent from the [Azure AI Agent Se
 2. Azure AI Foundry Project (provided)
 
 ## DO NOT SKIP THIS STEP - Delete the .vscode directory from the Codespace
-For this exercise, you are using a different App Service. To ensure the deployment for this exercise points to the correct app, you must delete the `.vscode` directory that is generated during Exercise 1. This directory contains a config file that points all VS Code deployments from this workspace to that app. 
+For this exercise, you are using a different App Service. To ensure the deployment for this exercise points to the correct app, you must delete the `.vscode` directory that may have been generated during Exercise 1. This directory contains a config file that points all VS Code deployments from this workspace to that app. If this directory was not created for you, you can skip this step.
 
 Right-click on the `.vscode` code directory and select **Delete**.
 

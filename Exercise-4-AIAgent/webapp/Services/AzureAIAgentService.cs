@@ -187,13 +187,13 @@ namespace dotnetfashionassistant.Services
                         Timestamp = DateTime.Now
                     }
                 };
-            }
-              // Check if we already have this thread history cached and it's recent (less than 1 minute old)
+            }            // Check if we already have this thread history cached and is very recent (less than 5 seconds old)
+            // This ensures more frequent refreshes of the chat history
             if (_threadHistoryCache.TryGetValue(threadId, out var cachedHistory) && 
                 _lastCacheUpdateTime.TryGetValue(threadId, out var lastUpdate) &&
-                (DateTime.UtcNow - lastUpdate).TotalMinutes < 1)
+                (DateTime.UtcNow - lastUpdate).TotalSeconds < 5)
             {
-                // Return the cached history if it exists and is recent
+                // Return the cached history if it exists and is very recent
                 return new List<ChatMessage>(cachedHistory);
             }
             
@@ -201,12 +201,19 @@ namespace dotnetfashionassistant.Services
             
             try
             {                // Set a cancellation timeout to prevent hanging
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15)); // Increased timeout for pagination
                 
-                Response<PageableList<ThreadMessage>> messagesResponse = await _client.GetMessagesAsync(threadId, cancellationToken: cts.Token);
-                IReadOnlyList<ThreadMessage> messages = messagesResponse.Value.Data;
+                // Get all messages - the SDK handles pagination internally
+                var allMessages = new List<ThreadMessage>();
+                Response<PageableList<ThreadMessage>> messagesResponse = await _client.GetMessagesAsync(
+                    threadId, 
+                    cancellationToken: cts.Token);
+                
+                // Add messages from the response
+                allMessages.AddRange(messagesResponse.Value.Data);
 
-                foreach (ThreadMessage message in messages.OrderBy(m => m.CreatedAt))
+                // Process messages in chronological order (oldest to newest)
+                foreach (ThreadMessage message in allMessages.OrderBy(m => m.CreatedAt))
                 {
                     string messageContent = "";
                     foreach (MessageContent contentItem in message.ContentItems)
@@ -216,10 +223,14 @@ namespace dotnetfashionassistant.Services
                             messageContent += textItem.Text ?? string.Empty;
                         }
                     }
-                    
+                      // For AI messages, format the content for proper HTML display
+                    string formattedContent = message.Role != MessageRole.User ? 
+                        FormatMessageContent(messageContent) : "";
+                        
                     chatHistory.Add(new ChatMessage
                     {
                         Content = messageContent,
+                        FormattedContent = formattedContent,
                         IsUser = message.Role == MessageRole.User,
                         Timestamp = message.CreatedAt.DateTime
                     });
@@ -257,9 +268,26 @@ namespace dotnetfashionassistant.Services
                 // If there's an error, return cached data if available or empty list
                 _logger.LogError(ex, "Error retrieving thread history for thread {ThreadId}", threadId);
                 return cachedHistory ?? new List<ChatMessage>();
-            }
-
-            return chatHistory;
+            }            return chatHistory;
+        }
+        
+        // Helper method to format message content with HTML tags
+        private string FormatMessageContent(string content)
+        {
+            if (string.IsNullOrEmpty(content))
+                return string.Empty;
+                
+            // Handle markdown-style bold text (convert **text** to <strong>text</strong>)
+            content = System.Text.RegularExpressions.Regex.Replace(
+                content, 
+                @"\*\*([^*]+)\*\*", 
+                "<strong>$1</strong>");
+                
+            // Handle line breaks and bullet points
+            return content
+                .Replace("\n\n", "<br><br>")
+                .Replace("\n", "<br>")
+                .Replace("•", "<br>•");
         }
     }
 }
