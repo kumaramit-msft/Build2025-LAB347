@@ -11,27 +11,42 @@ In this exercise, you will connect an Azure AI Agent from the [Azure AI Agent Se
 1. App Service app with Fashion Store app deployed (provided)
 2. Azure AI Foundry Project (provided)
 
-<!-- TODO: if need to deploy the app, write up instructions and call out that you need to delete the .vscode/.azure configs so that the users don't get confused and deploy to the wrong app. -->
+## DO NOT SKIP THIS STEP - Delete the .vscode directory from the Codespace
+For this exercise, you are using a different App Service. To ensure the deployment for this exercise points to the correct app, you must delete the `.vscode` directory that is generated during Exercise 1. This directory contains a config file that points all VS Code deployments from this workspace to that app. 
 
-## Navigating to the Deployed Linux App Service
-1. Open a browser and go to [Azure Portal](https://portal.azure.com) using the credentials provided.
-2. Click on **App Service** in the top navigation bar.
-3. From the list of apps, click on **Exercise-4** application.
-4. On the **Overview** page, you can view some properties of the app:
-   - The app runs on **P0v3**.
-   - This application is deployed with **.NET 8**.
+Right-click on the `.vscode` code directory and select **Delete**.
 
-    ![Web Application Overview in Azure Portal](./images/Exercise-4-appoverview.png)
-  
-    You can navigate to the app at this point to see what it looks like and what functionality is available. Click **Browse** to navigate to the app.
+![Delete .vscode directory](./images/Exercise-4-deletevscodedirectory.png)
+
+## Deploy webapp to Azure App Service
+- Right click on dotnetfashionassistant.csproj and select Open In Integrated Terminal
+
+    ![Context menu showing option to Open in integrated Terminal](./images/Exercise-4-openterminal.png)
+
+- To publish the web app, run the following command in the terminal.
     
-    Visit the Inventory and Cart pages in the app and feel free to add some items to your cart to see how the app works.
+    ```bash
+    dotnet publish -c Release -o ./bin/Publish**
+    ```
 
-    ![Shopping cart image](./images/Exercise-4-browseapp.png)
+- Right click on **bin--> Publish** folder and select **Deploy to Web App...** option.
 
-    If you try to use the Assistant at this point, you receive an error message indicating that you need to connect your agent to the app.
+    ![Deploy to web app](./images/Exercise-4-deploy.png)
 
-    ![Agent not configured error message in Assistant](./images/Exercise-4-agentnotconfigured.png)
+- Select the already existing webapp for Exercise 4. The name should be in the format `fashionassistant<random-id>`.
+  
+### Run the webapp
+Once deployed, click on the **Browse** button on the portal by going to the App Service web app view to view the web app.
+
+![Web Application Overview in Azure Portal](./images/Exercise-4-appoverview.png)
+
+Visit the Inventory and Cart pages in the app and feel free to add some items to your cart to see how the app works.
+
+![Shopping cart image](./images/Exercise-4-browseapp.png)
+
+If you try to use the Assistant at this point, you receive an error message indicating that you need to connect your agent to the app.
+
+![Agent not configured error message in Assistant](./images/Exercise-4-agentnotconfigured.png)
 
 ## Step 1: Create the Agent in the Azure AI Agent Service
 1. In the [Azure Portal](https://portal.azure.com), go to your **Resource group** where all of the pre-created lab resources are located.
