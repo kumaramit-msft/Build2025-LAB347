@@ -1,0 +1,1023 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "sites_app1_name": {
+            "metadata":{
+            "description": "Name of the Web App 1"
+            },
+            "defaultValue": "[concat('devshop', uniqueString(resourceGroup().id))]",
+            "type": "String"
+        },
+        "sites_app2_name": {
+             "metadata":{
+            "description": "Name of the Web App 2"
+             },
+            "defaultValue": "[concat('fashionassistant', uniqueString(resourceGroup().id))]",
+            "type": "String"
+        },
+        "serverfarm_Build2025_HOL347_name": {
+             "metadata":{
+            "description": "Name of the App Service Plan for the Lab"
+             },
+            "defaultValue": "Build2025HOL347asp",
+            "type": "String"
+        },
+
+        "storageaccount_Build2025_HOL347_name": {
+             "metadata":{
+            "description": "Name of the Storage Account"
+             },
+            "defaultValue": "[concat('hol347', uniqueString(resourceGroup().id))]",
+            "type": "String"
+        },
+        "accounts_Build2025_HOL347_name": {
+             "metadata":{
+            "description": "Name of the Azure Cognitive Services account"
+             },
+            "defaultValue": "[concat('Build2025HOL347', uniqueString(resourceGroup().id))]",
+            "type": "String"
+        },
+
+        "AIFoundry_AIService_Build2025_HOL347_name": {
+                "metadata":{
+                "description": "Name of the AI Service Account which support the AI Foundry Hub Resource"
+                },
+                "defaultValue": "[concat('hol347aiservice', uniqueString(resourceGroup().id))]",
+                "type": "String"
+        },
+        "AIFoundry_storageaccount_Build2025_HOL347_name": {
+                "metadata":{
+                "description": "Name of the Storage Account which support the AI Foundry Hub Resource"
+                },
+                "defaultValue": "[concat('hol347ai', uniqueString(resourceGroup().id))]",
+                "type": "String"
+        },
+        "AIFoundry_KeyVault_Build2025_HOL347_name": {
+                "metadata":{
+                "description": "Name of the Key Vault which support the AI Foundry Hub Resource"
+                },
+                "defaultValue": "[concat('hol347aikv', uniqueString(resourceGroup().id))]",
+                "type": "String"
+        },
+        "AIFoundryHub_Build2025_HOL347_name": {
+                "metadata":{
+                "description": "Name of the AI Foundry Hub Resource"
+                },
+                "defaultValue": "[concat('hol347aih', uniqueString(resourceGroup().id))]",
+                "type": "String"
+        },
+        "AIFoundryHub_Build2025_HOL347_FriendlyName": {
+                "metadata":{
+                "description": "Friendly name of the AI Foundry Hub Resource"
+                },
+                "defaultValue": "[concat('hol347aih', uniqueString(resourceGroup().id))]",
+                "type": "String"
+        },
+        "AIFoundryHub_Build2025_HOL347_Description": {
+                "metadata":{
+                "description": "Description of the AI Foundry Hub Resource"
+                },
+                "defaultValue": "[concat('hol347aih_description', uniqueString(resourceGroup().id))]",
+                "type": "String"
+        },
+        "AIFoundryHub_Build2025_HOL347_ProjectName": {
+                "metadata":{
+                "description": "Project Name of the AI Foundry Hub Project Resource"
+                },
+                "defaultValue": "[concat('hol347aihproj', uniqueString(resourceGroup().id))]",
+                "type": "String"
+        },
+        "AIFoundryHub_Build2025_HOL347_ProjectFriendlyName": {
+                "metadata":{
+                "description": "Friendly Name of the AI Foundry Hub Project Resource"
+                },
+                "defaultValue": "[concat('hol347aihprojfriendly', uniqueString(resourceGroup().id))]",
+                "type": "String"
+        },
+        "AIFoundryHub_Build2025_HOL347_ModelName": {
+                "type": "string",
+                "defaultValue": "gpt-4o-mini",
+                "metadata": {
+                "description": "Model name for deployment"
+                }
+        },
+        "AIFoundryHub_Build2025_HOL347_ModelCapacity": {
+                "type": "int",
+                "defaultValue": 50,
+                "metadata": {
+                    "description": "Model deployment capacity"
+                }
+        },
+        "AIFoundryHub_Build2025_HOL347_ModelSkuName": {
+                "type": "string",
+                "defaultValue": "GlobalStandard",
+                "metadata": {
+                    "description": "Model deployment SKU name"
+            }
+        },
+        "AIFoundryHub_Build2025_HOL347_ModelFormat": {
+                "type": "string",
+                "defaultValue": "OpenAI",
+                "metadata": {
+                    "description": "Model format for deployment"
+                }
+        },
+        "AIFoundryHub_Build2025_HOL347_ModelVersion": {
+                "type": "string",
+                "defaultValue": "2024-07-18",
+                "metadata": {
+                    "description": "Model version for deployment"
+                }
+        },
+        "AIFoundryHub_Build2025_HOL347_ServiceKind": {
+                "type": "string",
+                "defaultValue": "AIServices",
+                "metadata": {
+                    "description": "AI Service Account kind: either OpenAI or AIServices"
+            }
+        },
+        "AIFoundryHub_Build2025_HOL347_ServicesTarget": {
+                "type": "string",
+                "defaultValue": "gpt-4o-mini",
+                "metadata": {
+                "description": "Service target for deployment"
+                }
+        },
+        "AIFoundry_KeyVault_Build2025_HOL347_ProjectDescription": {
+                "type": "string",
+                "defaultValue": "gpt-4o-mini",
+                "metadata": {
+                "description": "Project description for deployment"
+                }
+        },
+        "region": {
+             "metadata":{
+            "description": "Region for the resources"
+            },
+            "defaultValue": "North Europe",
+            "allowedValues": [
+                    "North Europe",
+                    "West US 2",
+                    "East Asia",
+                    "Southeast Asia"
+            ],
+            "type": "String"
+        },
+        "AzureAI_Region": {
+             "metadata":{
+            "description": "Region for the Azure Cognitive Services account, this allows a different region to be used in order to be able to use the gpt-4o model"
+             },
+            "defaultValue": "Sweden Central",
+            "allowedValues": [
+                "East US",
+                "East US 2",
+                "North Central US",
+                "South Central US",
+                "Sweden Central",
+                "West US",
+                "West US 3"
+            ],
+            "type": "String"
+        }
+    },
+    "variables": {
+        "app1_principalId": "resourceId('Microsoft.Web/sites', parameters('sites_app1_name')), '2019-08-01', 'full').identity.principalId",
+        "app2_principalId": "resourceId('Microsoft.Web/sites', parameters('sites_app2_name')), '2019-08-01', 'full').identity.principalId"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.CognitiveServices/accounts",
+            "apiVersion": "2024-06-01-preview",
+            "name": "[parameters('accounts_Build2025_HOL347_name')]",
+            "location": "[parameters('AzureAI_Region')]",
+            "sku": {
+                "name": "S0"
+            },
+            "kind": "OpenAI",
+            "properties": {
+                "apiProperties": {},
+                "customSubDomainName":"[toLower(parameters('accounts_Build2025_HOL347_name'))]",
+                "networkAcls": {
+                    "defaultAction": "Allow",
+                    "virtualNetworkRules": [],
+                    "ipRules": []
+                },
+                "publicNetworkAccess": "Enabled"
+            }
+        },
+        {
+            "type": "Microsoft.CognitiveServices/accounts/deployments",
+            "apiVersion": "2024-06-01-preview",
+            "name": "[concat(parameters('accounts_Build2025_HOL347_name'), '/gpt-4o-mini')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))]"
+            ],
+            "sku": {
+                "name": "GlobalStandard",
+                "capacity": 10
+            },
+            "properties": {
+                "model": {
+                    "format": "OpenAI",
+                    "name": "gpt-4o-mini",
+                    "version": "2024-07-18"
+                },
+                "versionUpgradeOption": "OnceNewDefaultVersionAvailable",
+                "currentCapacity": 10,
+                "raiPolicyName": "Microsoft.DefaultV2"
+            }
+        },
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2023-12-01",
+            "name": "[parameters('serverfarm_Build2025_HOL347_name')]",
+            "location": "[parameters('region')]",
+            "sku": {
+                "name": "P2mv3",
+                "tier": "PremiumMV3",
+                "size": "P2mv3",
+                "family": "Pmv3",
+                "capacity": 1
+            },
+            "kind": "linux",
+            "properties": {
+                "perSiteScaling": false,
+                "elasticScaleEnabled": false,
+                "maximumElasticWorkerCount": 1,
+                "isSpot": false,
+                "reserved": true,
+                "isXenon": false,
+                "hyperV": false,
+                "targetWorkerCount": 0,
+                "targetWorkerSizeId": 0,
+                "zoneRedundant": false
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2023-12-01",
+            "name": "[parameters('sites_app1_name')]",
+            "location": "[parameters('region')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarm_Build2025_HOL347_name'))]"
+            ],
+            "kind": "app,linux",
+            "identity": {
+                            "type": "SystemAssigned"
+                        },
+            "properties": {
+                "enabled": true,
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarm_Build2025_HOL347_name'))]",
+                "reserved": true,
+                "isXenon": false,
+                "hyperV": false,
+                "dnsConfiguration": {},
+                "vnetRouteAllEnabled": false,
+                "vnetImagePullEnabled": false,
+                "vnetContentShareEnabled": false,
+                "siteConfig": {
+                    "numberOfWorkers": 1,
+                    "linuxFxVersion": "DOTNETCORE|8.0",
+                    "acrUseManagedIdentityCreds": false,
+                    "alwaysOn": true,
+                    "http20Enabled": false,
+                    "functionAppScaleLimit": 0,
+                    "minimumElasticInstanceCount": 0
+                },
+                "scmSiteAlsoStopped": false,
+                "clientAffinityEnabled": false,
+                "clientCertEnabled": false,
+                "clientCertMode": "Required",
+                "hostNamesDisabled": false,
+                "vnetBackupRestoreEnabled": false,
+                "containerSize": 0,
+                "dailyMemoryTimeQuota": 0,
+                "httpsOnly": true,
+                "redundancyMode": "None",
+                "publicNetworkAccess": "Enabled",
+                "storageAccountRequired": false,
+                "keyVaultReferenceIdentity": "SystemAssigned"
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2023-12-01",
+            "name": "[parameters('sites_app2_name')]",
+            "location": "[parameters('region')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarm_Build2025_HOL347_name'))]"
+            ],
+            "kind": "app,linux",
+                        "identity": {
+                            "type": "SystemAssigned"
+                        },
+            "properties": {
+                "enabled": true,
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarm_Build2025_HOL347_name'))]",
+                "reserved": true,
+                "isXenon": false,
+                "hyperV": false,
+                "dnsConfiguration": {},
+                "vnetRouteAllEnabled": false,
+                "vnetImagePullEnabled": false,
+                "vnetContentShareEnabled": false,
+                "siteConfig": {
+                    "numberOfWorkers": 1,
+                    "linuxFxVersion": "DOTNETCORE|8.0",
+                    "acrUseManagedIdentityCreds": false,
+                    "alwaysOn": true,
+                    "http20Enabled": false,
+                    "functionAppScaleLimit": 0,
+                    "minimumElasticInstanceCount": 0
+                },
+                "scmSiteAlsoStopped": false,
+                "clientAffinityEnabled": false,
+                "clientCertEnabled": false,
+                "clientCertMode": "Required",
+                "hostNamesDisabled": false,
+                "vnetBackupRestoreEnabled": false,
+                "containerSize": 0,
+                "dailyMemoryTimeQuota": 0,
+                "httpsOnly": true,
+                "redundancyMode": "None",
+                "publicNetworkAccess": "Enabled",
+                "storageAccountRequired": false,
+                "keyVaultReferenceIdentity": "SystemAssigned"
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/sitecontainers",
+            "apiVersion": "2024-04-01",
+            "name": "[concat(parameters('sites_app1_name'), '/phi4-sidecar')]",
+            "location": "North Europe",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_app1_name'))]"
+            ],
+            "properties": {
+                "image": "mcr.microsoft.com/appsvc/docs/sidecars/sample-experiment:phi-4-q4-gguf",
+                "targetPort": "11434",
+                "isMain": false,
+                "authType": "Anonymous",
+                "volumeMounts": [],
+                "environmentVariables": []
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
+            "apiVersion": "2023-12-01",
+            "name": "[concat(parameters('sites_app1_name'), '/ftp')]",
+            "location": "[parameters('region')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_app1_name'))]"
+            ],
+            "properties": {
+                "allow": false
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
+            "apiVersion": "2023-12-01",
+            "name": "[concat(parameters('sites_app2_name'), '/ftp')]",
+            "location": "[parameters('region')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_app2_name'))]"
+            ],
+            "properties": {
+                "allow": false
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
+            "apiVersion": "2023-12-01",
+            "name": "[concat(parameters('sites_app1_name'), '/scm')]",
+            "location": "[parameters('region')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_app1_name'))]"
+            ],
+            "properties": {
+                "allow": false
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
+            "apiVersion": "2023-12-01",
+            "name": "[concat(parameters('sites_app2_name'), '/scm')]",
+            "location": "[parameters('region')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_app2_name'))]"
+            ],
+            "properties": {
+                "allow": false
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/config",
+            "apiVersion": "2023-12-01",
+            "name": "[concat(parameters('sites_app1_name'), '/web')]",
+            "location": "[parameters('region')]",
+            "dependsOn": [
+                    "[resourceId('Microsoft.Web/sites', parameters('sites_app1_name'))]",
+                    "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageaccount_Build2025_HOL347_name'))]",
+                    "[resourceId('Microsoft.Storage/storageAccounts/queueServices', parameters('storageaccount_Build2025_HOL347_name'), 'default')]",
+                    "[resourceId('Microsoft.Storage/storageAccounts/queueServices/queues', parameters('storageaccount_Build2025_HOL347_name'), 'default','queue1')]"
+            ],
+            "properties": {
+                "numberOfWorkers": 1,
+                "defaultDocuments": [
+                    "Default.htm",
+                    "Default.html",
+                    "Default.asp",
+                    "index.htm",
+                    "index.html",
+                    "iisstart.htm",
+                    "default.aspx",
+                    "index.php",
+                    "hostingstart.html"
+                ],
+                "linuxFxVersion": "DOTNETCORE|8.0",
+                "requestTracingEnabled": false,
+                "remoteDebuggingEnabled": false,
+                "httpLoggingEnabled": false,
+                "acrUseManagedIdentityCreds": false,
+                "logsDirectorySizeLimit": 35,
+                "detailedErrorLoggingEnabled": false,
+                "publishingUsername": "REDACTED",
+                "scmType": "None",
+                "use32BitWorkerProcess": true,
+                "webSocketsEnabled": false,
+                "alwaysOn": true,
+                "managedPipelineMode": "Integrated",
+                "virtualApplications": [
+                    {
+                        "virtualPath": "/",
+                        "physicalPath": "site\\wwwroot",
+                        "preloadEnabled": true
+                    }
+                ],
+                "loadBalancing": "LeastRequests",
+                "experiments": {
+                    "rampUpRules": []
+                },
+                "autoHealEnabled": false,
+                "vnetRouteAllEnabled": false,
+                "vnetPrivatePortsCount": 0,
+                "publicNetworkAccess": "Enabled",
+                "localMySqlEnabled": false,
+                "ipSecurityRestrictions": [
+                    {
+                        "ipAddress": "Any",
+                        "action": "Allow",
+                        "priority": 2147483647,
+                        "name": "Allow all",
+                        "description": "Allow all access"
+                    }
+                ],
+                "scmIpSecurityRestrictions": [
+                    {
+                        "ipAddress": "Any",
+                        "action": "Allow",
+                        "priority": 2147483647,
+                        "name": "Allow all",
+                        "description": "Allow all access"
+                    }
+                ],
+                "scmIpSecurityRestrictionsUseMain": false,
+                "http20Enabled": false,
+                "minTlsVersion": "1.2",
+                "scmMinTlsVersion": "1.2",
+                "ftpsState": "FtpsOnly",
+                "preWarmedInstanceCount": 0,
+                "elasticWebAppScaleLimit": 0,
+                "functionsRuntimeScaleMonitoringEnabled": false,
+                "minimumElasticInstanceCount": 0,
+                "azureStorageAccounts": {},
+                "appSettings": [
+                     {
+                         "name": "QUEUE_NAME",
+                         "value": "queue1"
+                     },
+                    {
+                        "name": "STORAGE_ACCOUNT_NAME",
+                        "value": "[parameters('storageaccount_Build2025_HOL347_name')]"
+                    },
+                    {
+                        "name": "WEBSITE_SKIP_RUNNING_KUDUAGENT",
+                        "value": "false"
+                    },
+                    {
+                        "name": "AZURE_OPENAI_ENDPOINT",
+                        "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))).endpoint]"
+                    },
+                    {
+                        "name": "AZURE_OPENAI_DEPLOYMENT",
+                        "value": "gpt-4o-mini"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/config",
+            "apiVersion": "2023-12-01",
+            "name": "[concat(parameters('sites_app2_name'), '/web')]",
+            "location": "[parameters('region')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_app2_name'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageaccount_Build2025_HOL347_name'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts/queueServices', parameters('storageaccount_Build2025_HOL347_name'), 'default')]",
+                "[resourceId('Microsoft.Storage/storageAccounts/queueServices/queues', parameters('storageaccount_Build2025_HOL347_name'), 'default', 'queue1')]"
+            ],
+            "properties": {
+                "numberOfWorkers": 1,
+                "defaultDocuments": [
+                    "Default.htm",
+                    "Default.html",
+                    "Default.asp",
+                    "index.htm",
+                    "index.html",
+                    "iisstart.htm",
+                    "default.aspx",
+                    "index.php",
+                    "hostingstart.html"
+                ],
+                "linuxFxVersion": "DOTNETCORE|8.0",
+                "requestTracingEnabled": false,
+                "remoteDebuggingEnabled": false,
+                "httpLoggingEnabled": false,
+                "acrUseManagedIdentityCreds": false,
+                "logsDirectorySizeLimit": 35,
+                "detailedErrorLoggingEnabled": false,
+                "publishingUsername": "REDACTED",
+                "scmType": "None",
+                "use32BitWorkerProcess": true,
+                "webSocketsEnabled": false,
+                "alwaysOn": true,
+                "managedPipelineMode": "Integrated",
+                "virtualApplications": [
+                    {
+                        "virtualPath": "/",
+                        "physicalPath": "site\\wwwroot",
+                        "preloadEnabled": true
+                    }
+                ],
+                "loadBalancing": "LeastRequests",
+                "experiments": {
+                    "rampUpRules": []
+                },
+                "autoHealEnabled": false,
+                "vnetRouteAllEnabled": false,
+                "vnetPrivatePortsCount": 0,
+                "publicNetworkAccess": "Enabled",
+                "localMySqlEnabled": false,
+                "ipSecurityRestrictions": [
+                    {
+                        "ipAddress": "Any",
+                        "action": "Allow",
+                        "priority": 2147483647,
+                        "name": "Allow all",
+                        "description": "Allow all access"
+                    }
+                ],
+                "scmIpSecurityRestrictions": [
+                    {
+                        "ipAddress": "Any",
+                        "action": "Allow",
+                        "priority": 2147483647,
+                        "name": "Allow all",
+                        "description": "Allow all access"
+                    }
+                ],
+                "scmIpSecurityRestrictionsUseMain": false,
+                "http20Enabled": false,
+                "minTlsVersion": "1.2",
+                "scmMinTlsVersion": "1.2",
+                "ftpsState": "FtpsOnly",
+                "preWarmedInstanceCount": 0,
+                "elasticWebAppScaleLimit": 0,
+                "functionsRuntimeScaleMonitoringEnabled": false,
+                "minimumElasticInstanceCount": 0,
+                "azureStorageAccounts": {},
+                "appSettings": [
+                    {
+                         "name": "QUEUE_NAME",
+                         "value": "[resourceId('Microsoft.Storage/storageAccounts/queueServices/queues', parameters('storageaccount_Build2025_HOL347_name'), 'default', 'queue1')]"
+                    },
+                    {
+                        "name": "STORAGE_ACCOUNT_NAME",
+                        "value": "[parameters('storageaccount_Build2025_HOL347_name')]"
+                    },
+                    {
+                        "name": "WEBSITE_SKIP_RUNNING_KUDUAGENT",
+                        "value": "false"
+                    }
+                ]
+            }
+        },
+       
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2023-05-01",
+            "name": "[parameters('storageaccount_Build2025_HOL347_name')]",
+            "location": "[parameters('region')]",
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "kind": "StorageV2",
+            "properties": {
+                "supportsHttpsTrafficOnly": true,
+                "allowBlobPublicAccess": false
+            }
+        },
+         {
+            "type": "Microsoft.Storage/storageAccounts/queueServices",
+            "apiVersion": "2024-01-01",
+            "name": "[concat(parameters('storageaccount_Build2025_HOL347_name'), '/default')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageaccount_Build2025_HOL347_name'))]"
+            ],
+            "properties": {
+                "cors": {
+                    "corsRules": []
+                }
+            }
+        },
+         {
+            "type": "Microsoft.Storage/storageAccounts/queueServices/queues",
+            "apiVersion": "2024-01-01",
+            "name": "[concat(parameters('storageaccount_Build2025_HOL347_name'), '/default/queue1')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/queueServices', parameters('storageaccount_Build2025_HOL347_name'), 'default')]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageaccount_Build2025_HOL347_name'))]"
+            ],
+            "properties": {
+                "metadata": {}
+            }
+        },
+         {
+            "type": "Microsoft.Storage/storageAccounts/queueServices/queues",
+            "apiVersion": "2024-01-01",
+            "name": "[concat(parameters('storageaccount_Build2025_HOL347_name'), '/default/queue2')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/queueServices', parameters('storageaccount_Build2025_HOL347_name'), 'default')]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageaccount_Build2025_HOL347_name'))]"
+            ],
+            "properties": {
+                "metadata": {}
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2023-05-01",
+            "name": "[parameters('AIFoundry_storageaccount_Build2025_HOL347_name')]",
+            "location": "[parameters('region')]",
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "kind": "StorageV2",
+            "properties": {
+                "supportsHttpsTrafficOnly": true,
+                "allowBlobPublicAccess": false
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/blobServices",
+            "apiVersion": "2024-01-01",
+            "name": "[concat(parameters('AIFoundry_storageaccount_Build2025_HOL347_name'), '/default')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('AIFoundry_storageaccount_Build2025_HOL347_name'))]"
+            ],
+            "properties": {
+                "cors": {
+                    "corsRules": [
+                        {
+                            "allowedOrigins": [
+                                "https://mlworkspace.azure.ai",
+                                "https://ml.azure.com",
+                                "https://*.ml.azure.com",
+                                "https://ai.azure.com",
+                                "https://*.ai.azure.com",
+                                "https://mlworkspacecanary.azure.ai",
+                                "https://mlworkspace.azureml-test.net"
+                            ],
+                            "allowedMethods": [
+                                "GET",
+                                "HEAD",
+                                "PUT",
+                                "DELETE",
+                                "OPTIONS",
+                                "POST",
+                                "PATCH"
+                            ],
+                            "maxAgeInSeconds": 1800,
+                            "exposedHeaders": [
+                                "*"
+                            ],
+                            "allowedHeaders": [
+                                "*"
+                            ]
+                        }
+                    ]
+                },
+                "deleteRetentionPolicy": {
+                "allowPermanentDelete": false,
+                "enabled": false
+                }
+            }
+        },
+        {
+          "type": "Microsoft.Storage/storageAccounts/fileServices",
+          "apiVersion": "2024-01-01",
+          "name": "[concat(parameters('AIFoundry_storageaccount_Build2025_HOL347_name'), '/default')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Storage/storageAccounts', parameters('AIFoundry_storageaccount_Build2025_HOL347_name'))]"
+          ],
+          "sku": {
+                "name": "Standard_ZRS",
+                "tier": "Standard"
+            },
+            "properties": {
+                "protocolSettings": {
+                    "smb": {}
+                },
+                "cors": {
+                    "corsRules": [
+                        {
+                            "allowedOrigins": [
+                                "https://mlworkspace.azure.ai",
+                                "https://ml.azure.com",
+                                "https://*.ml.azure.com",
+                                "https://ai.azure.com",
+                                "https://*.ai.azure.com",
+                                "https://mlworkspacecanary.azure.ai",
+                                "https://mlworkspace.azureml-test.net"
+                            ],
+                            "allowedMethods": [
+                                "GET",
+                                "HEAD",
+                                "PUT",
+                                "DELETE",
+                                "OPTIONS",
+                                "POST"
+                            ],
+                            "maxAgeInSeconds": 1800,
+                            "exposedHeaders": [
+                                "*"
+                            ],
+                            "allowedHeaders": [
+                                "*"
+                            ]
+                        }
+                    ]
+                },
+                "shareDeleteRetentionPolicy": {
+                    "enabled": true,
+                    "days": 7
+                }
+            } 
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/queueServices",
+            "apiVersion": "2024-01-01",
+            "name": "[concat(parameters('AIFoundry_storageaccount_Build2025_HOL347_name'), '/default')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('AIFoundry_storageaccount_Build2025_HOL347_name'))]"
+            ],
+            "properties": {
+                "cors": {
+                    "corsRules": []
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/tableServices",
+            "apiVersion": "2024-01-01",
+            "name": "[concat(parameters('AIFoundry_storageaccount_Build2025_HOL347_name'), '/default')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('AIFoundry_storageaccount_Build2025_HOL347_name'))]"
+            ],
+            "properties": {
+                "cors": {
+                    "corsRules": []
+                }
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "2024-12-01-preview",
+            "name": "[parameters('AIFoundry_KeyVault_Build2025_HOL347_name')]",
+            "location": "[parameters('region')]",
+            "properties": {
+                "tenantId": "[subscription().tenantId]",
+                "sku": {
+                    "family": "A",
+                    "name": "standard"
+                },
+                "enabledForDeployment":false,
+                "enabledForTemplateDeployment": true,
+                "enableSoftDelete": false,
+                "softDeleteRetentionInDays": 90,
+                "enableRbacAuthorization": true
+            }
+        },
+        {
+              "type": "Microsoft.CognitiveServices/accounts",
+              "apiVersion": "2024-10-01",
+              "name": "[parameters('AIFoundry_AIService_Build2025_HOL347_name')]",
+              "location": "[parameters('AzureAI_Region')]",
+              "sku": {
+                "name": "S0"
+              },
+              "kind": "AIServices",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {
+                "customSubDomainName": "[toLower(format('{0}', toLower(parameters('AIFoundry_AIService_Build2025_HOL347_name'))))]",
+                "apiProperties": {
+                  "statisticsEnabled": false
+                },
+                "publicNetworkAccess": "Enabled"
+              }
+            },
+        {
+            "type": "Microsoft.CognitiveServices/accounts/deployments",
+            "apiVersion": "2024-10-01",
+            "name": "[format('{0}/{1}', parameters('AIFoundry_AIService_Build2025_HOL347_name'), parameters('AIFoundryHub_Build2025_HOL347_ModelName'))]",
+            "sku": {
+              "capacity": "[parameters('AIFoundryHub_Build2025_HOL347_ModelCapacity')]",
+              "name": "[parameters('AIFoundryHub_Build2025_HOL347_ModelSkuName')]"
+            },
+            "properties": {
+              "model": {
+                "name": "[parameters('AIFoundryHub_Build2025_HOL347_ModelName')]",
+                "format": "[parameters('AIFoundryHub_Build2025_HOL347_ModelFormat')]",
+                "version": "[parameters('AIFoundryHub_Build2025_HOL347_ModelVersion')]"
+              }
+            },
+            "dependsOn": [
+               "[resourceId('Microsoft.CognitiveServices/accounts', parameters('AIFoundry_AIService_Build2025_HOL347_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.MachineLearningServices/workspaces/connections",
+            "apiVersion": "2024-10-01-preview",
+            "name": "[format('{0}/{1}', parameters('AIFoundryHub_Build2025_HOL347_name'), format('{0}-connection-AIServices', parameters('AIFoundryHub_Build2025_HOL347_name')))]",
+            "properties": {
+                "category": "[parameters('AIFoundryHub_Build2025_HOL347_ServiceKind')]",
+                "target": "[parameters('AIFoundryHub_Build2025_HOL347_ServicesTarget')]",
+                "authType": "AAD",
+                "isSharedToAll": true,
+                "metadata": {
+                  "ApiType": "Azure",
+                  "ResourceId": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('AIFoundry_AIService_Build2025_HOL347_name'))]",
+                  "Location": "parameters('AzureAI_Region')"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('AIFoundryHub_Build2025_HOL347_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.MachineLearningServices/workspaces",
+            "apiVersion": "2024-10-01-preview",
+            "name": "[parameters('AIFoundryHub_Build2025_HOL347_name')]",
+            "location": "[parameters('AzureAI_Region')]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+              "friendlyName": "[parameters('AIFoundryHub_Build2025_HOL347_FriendlyName')]",
+              "description": "[parameters('AIFoundryHub_Build2025_HOL347_Description')]",
+              "keyVault": "[resourceId('Microsoft.KeyVault/vaults', parameters('AIFoundry_KeyVault_Build2025_HOL347_name'))]",
+              "storageAccount": "[resourceId('Microsoft.Storage/storageAccounts', parameters('AIFoundry_storageaccount_Build2025_HOL347_name'))]",
+              "systemDatastoresAuthMode": "identity"
+            },
+              "kind": "hub"
+        },
+        {
+            "type": "Microsoft.MachineLearningServices/workspaces",
+            "apiVersion": "2024-10-01-preview",
+            "name": "[parameters('AIFoundryHub_Build2025_HOL347_ProjectName')]",
+            "location": "[parameters('AzureAI_Region')]",
+            "identity": {
+              "type": "SystemAssigned"
+            },
+            "properties": {
+              "friendlyName": "[parameters('AIFoundryHub_Build2025_HOL347_ProjectFriendlyName')]",
+              "description": "[parameters('AIFoundry_KeyVault_Build2025_HOL347_ProjectDescription')]",
+              "systemDatastoresAuthMode": "identity",
+              "hubResourceId": "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('AIFoundryHub_Build2025_HOL347_name'))]"
+           },
+            "kind": "project",
+            "dependsOn": [
+                "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('AIFoundryHub_Build2025_HOL347_name'))]"
+            ]
+        }, 
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "name": "[guid(resourceGroup().id, variables('app1_principalId'), concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', 'a001fd3d-188f-4b5d-821b-7da978bf7442'))]",
+            "scope": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_app1_name'))]",
+                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))]"
+            ],
+            "properties":{
+                "roleDefinitionId": "[concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', 'a001fd3d-188f-4b5d-821b-7da978bf7442')]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('sites_app1_name')), '2019-08-01', 'full').identity.principalId]"
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "name": "[guid(resourceGroup().id, variables('app2_principalId'), concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', 'a001fd3d-188f-4b5d-821b-7da978bf7442'))]",
+            "scope": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_app2_name'))]",
+                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))]"
+            ],
+            "properties":{
+                "roleDefinitionId": "[concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', 'a001fd3d-188f-4b5d-821b-7da978bf7442')]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('sites_app2_name')), '2019-08-01', 'full').identity.principalId]"
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "name": "[guid(resourceGroup().id, variables('app1_principalId'), concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', '974c5e8b-45b9-4653-ba55-5f855dd0fb88'))]",
+            "scope": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageaccount_Build2025_HOL347_name'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_app1_name'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageaccount_Build2025_HOL347_name'))]"
+            ],
+            "properties":{
+                "roleDefinitionId": "[concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', '974c5e8b-45b9-4653-ba55-5f855dd0fb88')]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('sites_app1_name')), '2019-08-01', 'full').identity.principalId]"
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "name": "[guid(resourceGroup().id, variables('app2_principalId'), concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', '974c5e8b-45b9-4653-ba55-5f855dd0fb88'))]",
+            "scope": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageaccount_Build2025_HOL347_name'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('sites_app2_name'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageaccount_Build2025_HOL347_name'))]"
+            ],
+            "properties":{
+                "roleDefinitionId": "[concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', '974c5e8b-45b9-4653-ba55-5f855dd0fb88')]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('sites_app2_name')), '2019-08-01', 'full').identity.principalId]"
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', parameters('AIFoundry_AIService_Build2025_HOL347_name'))]",
+            "name": "[guid(resourceId('Microsoft.CognitiveServices/accounts', parameters('AIFoundry_AIService_Build2025_HOL347_name')), resourceId('Microsoft.Authorization/roleDefinitions', '25fbc0a9-bd7c-42a3-aa1a-3b75d497ee68'), parameters('AIFoundryHub_Build2025_HOL347_ProjectName'))]",
+            "properties": {
+                "principalId": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('AIFoundryHub_Build2025_HOL347_ProjectName')), '2024-10-01-preview', 'full').identity.principalId]",
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '25fbc0a9-bd7c-42a3-aa1a-3b75d497ee68')]",
+                "principalType": "ServicePrincipal"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('AIFoundryHub_Build2025_HOL347_ProjectName'))]",
+                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('AIFoundry_AIService_Build2025_HOL347_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', parameters('AIFoundry_AIService_Build2025_HOL347_name'))]",
+            "name": "[guid(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('AIFoundryHub_Build2025_HOL347_ProjectName')), resourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'), resourceId('Microsoft.CognitiveServices/accounts', parameters('AIFoundry_AIService_Build2025_HOL347_name')))]",
+            "properties": {
+                "principalId": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('AIFoundryHub_Build2025_HOL347_ProjectName')), '2024-10-01-preview', 'full').identity.principalId]",
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd')]",
+                "principalType": "ServicePrincipal"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('AIFoundryHub_Build2025_HOL347_ProjectName'))]",
+                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('AIFoundry_AIService_Build2025_HOL347_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', parameters('AIFoundry_AIService_Build2025_HOL347_name'))]",
+            "name": "[guid(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('AIFoundryHub_Build2025_HOL347_ProjectName')), resourceId('Microsoft.Authorization/roleDefinitions', 'a97b65f3-24c7-4388-baec-2e87135dc908'), resourceId('Microsoft.CognitiveServices/accounts', parameters('AIFoundry_AIService_Build2025_HOL347_name')))]",
+            "properties": {
+                "principalId": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('AIFoundryHub_Build2025_HOL347_ProjectName')), '2024-10-01-preview', 'full').identity.principalId]",
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'a97b65f3-24c7-4388-baec-2e87135dc908')]",
+                "principalType": "ServicePrincipal"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('AIFoundryHub_Build2025_HOL347_ProjectName'))]",
+                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('AIFoundry_AIService_Build2025_HOL347_name'))]"
+            ]
+        }
+    ]
+}
