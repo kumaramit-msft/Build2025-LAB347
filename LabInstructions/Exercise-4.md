@@ -38,8 +38,6 @@ Right-click on the `.vscode` code directory and select **Delete**.
 ### Run the webapp
 Once deployed, click on the **Browse** button on the portal by going to the App Service web app view to view the web app.
 
-![Web Application Overview in Azure Portal](./images/Exercise-4-appoverview.png)
-
 Visit the Inventory and Cart pages in the app and feel free to add some items to your cart to see how the app works.
 
 ![Shopping cart image](./images/Exercise-4-browseapp.png)
@@ -50,7 +48,7 @@ If you try to use the Assistant at this point, you receive an error message indi
 
 ## Step 1: Create the Agent in the Azure AI Agent Service
 1. In the [Azure Portal](https://portal.azure.com), go to your **Resource group** where all of the pre-created lab resources are located.
-2. In the list of resources, find the resource with type **Azure AI project**. Click on that resource.
+2. In the list of resources, find the resource with type **Azure AI project**. Click on that resource. The name will be different than what is shown in the following screenshot.
 
     ![Azure AI Project location in resource group](./images/Exercise-4-aiproject.png)
 
@@ -92,9 +90,6 @@ If you try to use the Assistant at this point, you receive an error message indi
 
 6. Click **Next** and leave **Authentication method** as "Anonymous". There is no authentication on the provided sample web app or its API. If the app required an API key or managed identity to access it, this is where you would specify this information.
 7. Copy and paste your OpenAPI specification in the text box. The OpenAPI specification is provided in this repo under Exercise 4 and is called [swagger.json](../Exercise-4-AIAgent/webapp/swagger.json). Feel free to review the specification to understand what the provided API can do.
-
-    ![OpenAPI specification location in repo](./images/Exercise-4-swaggerlocation.png)
-
 8. Before you create the tool, you need to copy and paste your app's URL into the OpenAPI specification you are providing to the tool. Replace the placeholder <APP-SERVICE-URL> on line 10 of the OpenAPI specification with your app's URL. It should be in the format `https://app-name.azurewebsites.net`. The screenshot below contains a sample URL. You need to use your app's URL, not the one shown in the screenshot. To find your app's URL, you can navigate back to your App Service app in the Azure portal in another tab so you don't lose your place with the agent setup. Or, if you already browsed to the app in another tab, you can just copy it from there.
 
     ![Location to paste App Service URL in OpenAPI specification](./images/Exercise-4-urllocation.png)
