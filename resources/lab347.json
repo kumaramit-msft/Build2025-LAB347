@@ -983,7 +983,11 @@
                 "principalId": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('AIFoundryHub_Build2025_HOL347_ProjectName')), '2024-10-01-preview', 'full').identity.principalId]",
                 "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '25fbc0a9-bd7c-42a3-aa1a-3b75d497ee68')]",
                 "principalType": "ServicePrincipal"
-            }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('AIFoundryHub_Build2025_HOL347_ProjectName'))]",
+                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('AIFoundry_AIService_Build2025_HOL347_name'))]"
+            ]
         },
         {
             "type": "Microsoft.Authorization/roleAssignments",
@@ -994,7 +998,11 @@
                 "principalId": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('AIFoundryHub_Build2025_HOL347_ProjectName')), '2024-10-01-preview', 'full').identity.principalId]",
                 "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd')]",
                 "principalType": "ServicePrincipal"
-            }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('AIFoundryHub_Build2025_HOL347_ProjectName'))]",
+                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('AIFoundry_AIService_Build2025_HOL347_name'))]"
+            ]
         },
         {
             "type": "Microsoft.Authorization/roleAssignments",
@@ -1005,7 +1013,11 @@
                 "principalId": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('AIFoundryHub_Build2025_HOL347_ProjectName')), '2024-10-01-preview', 'full').identity.principalId]",
                 "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'a97b65f3-24c7-4388-baec-2e87135dc908')]",
                 "principalType": "ServicePrincipal"
-            }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('AIFoundryHub_Build2025_HOL347_ProjectName'))]",
+                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('AIFoundry_AIService_Build2025_HOL347_name'))]"
+            ]
         }
     ]
 }
