@@ -35,7 +35,7 @@ param modelFormat string = 'OpenAI'
 param modelVersion string = '2024-07-18'
 
 @description('Model deployment SKU name, prefer GlobalStandard for production workloads')
-param modelSkuName string = 'Standard'
+param modelSkuName string = 'GlobalStandard'
 
 @description('Model deployment capacity')
 param modelCapacity int = 50
