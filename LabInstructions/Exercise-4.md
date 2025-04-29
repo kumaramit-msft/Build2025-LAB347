@@ -26,7 +26,7 @@ Right-click on the `.vscode` code directory and select **Delete**.
 - To publish the web app, run the following command in the terminal.
     
     ```bash
-    dotnet publish -c Release -o ./bin/Publish**
+    dotnet publish -c Release -o ./bin/Publish
     ```
 
 - Right click on **bin--> Publish** folder and select **Deploy to Web App...** option.
