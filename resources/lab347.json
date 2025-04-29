@@ -111,7 +111,7 @@
         },
         "AIFoundryHub_Build2025_HOL347_ModelSkuName": {
                 "type": "string",
-                "defaultValue": "GlobalStandard",
+                "defaultValue": "Standard",
                 "metadata": {
                     "description": "Model deployment SKU name"
             }
@@ -214,7 +214,7 @@
                 "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))]"
             ],
             "sku": {
-                "name": "GlobalStandard",
+                "name": "Standard",
                 "capacity": 10
             },
             "properties": {
@@ -532,7 +532,9 @@
                 "[resourceId('Microsoft.Web/sites', parameters('sites_app2_name'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageaccount_Build2025_HOL347_name'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts/queueServices', parameters('storageaccount_Build2025_HOL347_name'), 'default')]",
-                "[resourceId('Microsoft.Storage/storageAccounts/queueServices/queues', parameters('storageaccount_Build2025_HOL347_name'), 'default', 'queue1')]"
+                "[resourceId('Microsoft.Storage/storageAccounts/queueServices/queues', parameters('storageaccount_Build2025_HOL347_name'), 'default', 'queue1')]",
+                "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('AIFoundryHub_Build2025_HOL347_name'))]",
+                "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('AIFoundryHub_Build2025_HOL347_ProjectName'))]"
             ],
             "properties": {
                 "numberOfWorkers": 1,
@@ -604,7 +606,15 @@
                 "functionsRuntimeScaleMonitoringEnabled": false,
                 "minimumElasticInstanceCount": 0,
                 "azureStorageAccounts": {},
-                "appSettings": []
+                "appSettings": [
+                    {
+                        "name": "AzureAIAgent__ConnectionString",
+                        "value": "[format('{0}.api.azureml.ms;{1};{2};{3}', toLower(replace(parameters('AzureAI_Region'), ' ', '')), subscription().subscriptionId, resourceGroup().name, parameters('AIFoundryHub_Build2025_HOL347_ProjectName'))]"                    },
+                    {
+                        "name": "AzureAIAgent__AgentId",
+                        "value": "<insert agent id here>"
+                    }
+                ]
             }
         },
        
