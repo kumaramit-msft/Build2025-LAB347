@@ -1,12 +1,12 @@
 {
     "image": "mcr.microsoft.com/devcontainers/universal:2",
     "features": {
-        "ghcr.io/devcontainers/features/azure-cli:1": {}
+        "ghcr.io/devcontainers/features/azure-cli:1": {},
+        "ghcr.io/devcontainers/features/azd:1": {}
     },
     "customizations": {
         "vscode": {
             "extensions": [
-                "ms-vscode.azure-account",
                 "ms-azuretools.vscode-azureappservice",
                 "ms-azuretools.vscode-azureresourcegroups",
                 "ms-dotnettools.vscode-dotnet-pack",
