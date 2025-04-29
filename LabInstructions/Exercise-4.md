@@ -11,6 +11,10 @@ In this exercise, you will connect an Azure AI Agent from the [Azure AI Agent Se
 1. App Service app with Fashion Store app deployed (provided)
 2. Azure AI Foundry Project (provided)
 
+## Navigate to the working directory for Exerxise 4
+
+<!-- TODO: In the beginning instruction steps, please explicitly call out that the reader needs to goto Exercise-4-AIAgent\webapp\dotnetfashionassistant.csproj.  Many participants won’t make the connection that they need to switch over to the Exercise-4 project. -->
+
 ## DO NOT SKIP THIS STEP - Delete the .vscode directory from the Codespace
 For this exercise, you are using a different App Service. To ensure the deployment for this exercise points to the correct app, you must delete the `.vscode` directory that may have been generated during Exercise 1. This directory contains a config file that points all VS Code deployments from this workspace to that app. If this directory was not created for you, you can skip this step.
 
@@ -19,7 +23,7 @@ Right-click on the `.vscode` code directory and select **Delete**.
 ![Delete .vscode directory](./images/Exercise-4-deletevscodedirectory.png)
 
 ## Deploy webapp to Azure App Service
-- Right click on dotnetfashionassistant.csproj and select Open In Integrated Terminal
+- Right click on dotnetfashionassistant.csproj and select **Open In Integrated Terminal**.
 
     ![Context menu showing option to Open in integrated Terminal](./images/Exercise-4-openterminal.png)
 
@@ -71,7 +75,7 @@ If you try to use the Assistant at this point, you receive an error message indi
 1. In the **Setup** menu, copy and paste the following **Instructions** for the Agent. These are general instructions for your agent to give it some context on its role and purpose. This is also where you can include guidance to the agent to stick to certain context - such as only answering questions about the fashion store and not unrelated topics.
 
     ```
-    You are an agent for a fashion store that sells clothing. You have the ability to view inventory, update the customer's shopping cart, and answer questions about the clothing items that are in the inventory and cart. You should not answer questions about topics that are unrelated to the fashion store.
+    You are an agent for a fashion store that sells clothing. You have the ability to view inventory, update the customer's shopping cart, and answer questions about the clothing items that are in the inventory and cart.
     ```
 
     ![Adding instructions for agent](./images/Exercise-4-agentinstructions.png)
@@ -89,8 +93,8 @@ If you try to use the Assistant at this point, you receive an error message indi
     ```
 
 6. Click **Next** and leave **Authentication method** as "Anonymous". There is no authentication on the provided sample web app or its API. If the app required an API key or managed identity to access it, this is where you would specify this information.
-7. Copy and paste your OpenAPI specification in the text box. The OpenAPI specification is provided in this repo under Exercise 4 and is called [swagger.json](../Exercise-4-AIAgent/webapp/swagger.json). Feel free to review the specification to understand what the provided API can do.
-8. Before you create the tool, you need to copy and paste your app's URL into the OpenAPI specification you are providing to the tool. Replace the placeholder <APP-SERVICE-URL> on line 10 of the OpenAPI specification with your app's URL. It should be in the format `https://app-name.azurewebsites.net`. The screenshot below contains a sample URL. You need to use your app's URL, not the one shown in the screenshot. To find your app's URL, you can navigate back to your App Service app in the Azure portal in another tab so you don't lose your place with the agent setup. Or, if you already browsed to the app in another tab, you can just copy it from there.
+7. Copy and paste your OpenAPI specification in the text box. The OpenAPI specification is provided in this repo under Exercise 4 and is called [swagger.json](../Exercise-4-AIAgent/swagger.json). Feel free to review the specification to understand what the provided API can do.
+8. Before you create the tool, you need to copy and paste your app's URL into the OpenAPI specification you are providing to the tool. Replace the placeholder <APP-SERVICE-URL> on line 10 of the OpenAPI specification with your app's URL. It should be in the format `https://<app-name>.azurewebsites.net`. The screenshot below contains a sample URL. You need to use your app's URL, not the one shown in the screenshot. To find your app's URL, you can navigate back to your App Service app in the Azure portal in another tab so you don't lose your place with the agent setup. Or, if you already browsed to the app in another tab, you can just copy it from there.
 
     ![Location to paste App Service URL in OpenAPI specification](./images/Exercise-4-urllocation.png)
 
@@ -100,7 +104,7 @@ If you try to use the Assistant at this point, you receive an error message indi
 For this sample, the OpenAPI specification was provided. If you want to create your own OpenAPI specification, GitHub Copilot for VS Code can help with that. The following is an example of how you can prompt Copilot to generate the OpenAPI specification for you using Agent mode. The Azure AI Agent Service requires each operation to have an "operationId", so that is also mentioned in the prompt. 
 
 > **NOTE**  
-> You may need to make additional updates and revisions to the generated OpenAPI specification in order for the Azure AI Agent Service to accept it. This includes updating the URL as was done in the instructions above. For more information on the requirements, review the [provided sample](../Exercise-4-AIAgent/webapp/swagger.json) or go to the [documentation](https://learn.microsoft.com/azure/ai-services/agents/how-to/tools/openapi-spec?tabs=python&pivots=overview).
+> You may need to make additional updates and revisions to the generated OpenAPI specification in order for the Azure AI Agent Service to accept it. This includes updating the URL as was done in the instructions above. For more information on the requirements, review the [provided sample](../Exercise-4-AIAgent/swagger.json) or go to the [documentation](https://learn.microsoft.com/azure/ai-services/agents/how-to/tools/openapi-spec?tabs=python&pivots=overview).
 
 ```
 Can you generate an OpenAPI specification for the two controllers for inventory and cart actions? Include an operationId for each operation that clearly indicates what each operation does.
@@ -112,7 +116,7 @@ Can you generate an OpenAPI specification for the two controllers for inventory 
 After setting up the AI Agent and adding the OpenAPI Specified Tool, you need to configure your App Service with the appropriate environment variables.
 1. Go back to your App Service in the [Azure Portal](https://portal.azure.com).
 2. From the left menu, select **Environment variables**.
-3. In the **App settings** tab, click **+ Add** and add the following settings:
+3. In the **App settings** tab, click **+ Add** and add the following settings.
 
     **Name**: AzureAIAgent__ConnectionString  
     **Value**: The connection string you noted from your AI Agent Service
