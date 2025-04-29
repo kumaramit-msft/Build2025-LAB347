@@ -111,7 +111,7 @@
         },
         "AIFoundryHub_Build2025_HOL347_ModelSkuName": {
                 "type": "string",
-                "defaultValue": "Standard",
+                "defaultValue": "GlobalStandard",
                 "metadata": {
                     "description": "Model deployment SKU name"
             }
@@ -214,7 +214,7 @@
                 "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accounts_Build2025_HOL347_name'))]"
             ],
             "sku": {
-                "name": "Standard",
+                "name": "GlobalStandard",
                 "capacity": 10
             },
             "properties": {
