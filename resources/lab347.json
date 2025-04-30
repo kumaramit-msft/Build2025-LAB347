@@ -532,7 +532,9 @@
                 "[resourceId('Microsoft.Web/sites', parameters('sites_app2_name'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageaccount_Build2025_HOL347_name'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts/queueServices', parameters('storageaccount_Build2025_HOL347_name'), 'default')]",
-                "[resourceId('Microsoft.Storage/storageAccounts/queueServices/queues', parameters('storageaccount_Build2025_HOL347_name'), 'default', 'queue1')]"
+                "[resourceId('Microsoft.Storage/storageAccounts/queueServices/queues', parameters('storageaccount_Build2025_HOL347_name'), 'default', 'queue1')]",
+                "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('AIFoundryHub_Build2025_HOL347_name'))]",
+                "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('AIFoundryHub_Build2025_HOL347_ProjectName'))]"
             ],
             "properties": {
                 "numberOfWorkers": 1,
@@ -612,7 +614,6 @@
                 ]
             }
         },
-       
         {
             "type": "Microsoft.Storage/storageAccounts",
             "apiVersion": "2023-05-01",
@@ -641,7 +642,7 @@
                 }
             }
         },
-         {
+        {
             "type": "Microsoft.Storage/storageAccounts/queueServices/queues",
             "apiVersion": "2024-01-01",
             "name": "[concat(parameters('storageaccount_Build2025_HOL347_name'), '/default/queue1')]",
