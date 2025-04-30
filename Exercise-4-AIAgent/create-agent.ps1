@@ -105,8 +105,17 @@ catch {
 $swaggerPath = Join-Path $PSScriptRoot "swagger.json"
 $swaggerContent = Get-Content -Path $swaggerPath -Raw | ConvertFrom-Json
 
+# Check if Fashion app service name is set
+if (-not $env:APP_SERVICE_NAME) {
+    $env:APP_SERVICE_NAME = Read-Host "Enter your Fashion App Service name (without .azurewebsites.net)"
+}
+
+# Construct the Fashion app service URL
+$appServiceUrl = "https://$($env:APP_SERVICE_NAME).azurewebsites.net"
+Write-Host "Using Fashion App URL: $appServiceUrl"
+
 # Update the server URL in the swagger content
-$swaggerContent.servers[0].url = $env:FASHION_APP_SERVICE_URL
+$swaggerContent.servers[0].url = $appServiceUrl
 
 # Convert the swagger content back to JSON with proper formatting
 $swaggerJson = $swaggerContent | ConvertTo-Json -Depth 100
@@ -131,15 +140,6 @@ $requestBody = @"
     ]
 }
 "@
-
-# Check if Fashion app service name is set
-if (-not $env:APP_SERVICE_NAME) {
-    $env:APP_SERVICE_NAME = Read-Host "Enter your Fashion App Service name (without .azurewebsites.net)"
-}
-
-# Construct the Fashion app service URL
-$env:FASHION_APP_SERVICE_URL = "https://$($env:APP_SERVICE_NAME).azurewebsites.net"
-Write-Host "Using Fashion App URL: $env:FASHION_APP_SERVICE_URL"
 
 # Set up headers and call the API
 $headers = @{
