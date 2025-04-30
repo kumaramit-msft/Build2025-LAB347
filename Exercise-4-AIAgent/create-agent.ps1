@@ -3,6 +3,11 @@ $env:RESOURCE_GROUP_NAME = "<YOUR-RESOURCE-GROUP-NAME>"
 $env:APP_SERVICE_NAME = "<YOUR-APP-SERVICE-NAME>"  # e.g. fashionassistant22zlpkjsmanlk
 $env:AI_PROJECT_NAME = "<YOUR-AI-PROJECT-NAME>" # e.g. hol347aihproj22zlpkjsmanlk
 
+# Configure Azure CLI to allow dynamic installation of preview extensions
+Write-Host "Configuring Azure CLI to allow preview extensions..."
+az config set extension.dynamic_install_allow_preview=true
+az config set extension.use_dynamic_install=yes_without_prompt
+
 # Ensure we have necessary parameters
 if (-not $env:AI_PROJECT_NAME) {
     $env:AI_PROJECT_NAME = Read-Host "Enter your Azure ML project/workspace name"
