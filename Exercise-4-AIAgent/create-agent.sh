@@ -9,6 +9,12 @@ export AI_PROJECT_NAME="<YOUR-AI-PROJECT-NAME>" # e.g. hol347aihproj22zlpkjsmanl
 echo "Configuring Azure CLI to allow preview extensions..."
 az config set extension.dynamic_install_allow_preview=true
 az config set extension.use_dynamic_install=yes_without_prompt
+echo "Azure CLI configured to install extensions automatically."
+
+# Explicitly install the Azure ML extension
+echo "Installing Azure ML extension..."
+az extension add --name ml --yes
+echo "Azure ML extension installed successfully."
 
 # Ensure we have necessary parameters
 if [ -z "$AI_PROJECT_NAME" ]; then
