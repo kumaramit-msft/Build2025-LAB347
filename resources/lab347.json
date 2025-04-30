@@ -609,15 +609,11 @@
                 "appSettings": [
                     {
                         "name": "AzureAIAgent__ConnectionString",
-                        "value": "[format('{0}.api.azureml.ms;{1};{2};{3}', toLower(replace(parameters('AzureAI_Region'), ' ', '')), subscription().subscriptionId, resourceGroup().name, parameters('AIFoundryHub_Build2025_HOL347_ProjectName'))]"                    },
-                    {
-                        "name": "AzureAIAgent__AgentId",
-                        "value": "<insert agent id here>"
+                        "value": "[format('{0}.api.azureml.ms;{1};{2};{3}', toLower(replace(parameters('AzureAI_Region'), ' ', '')), subscription().subscriptionId, resourceGroup().name, parameters('AIFoundryHub_Build2025_HOL347_ProjectName'))]"
                     }
                 ]
             }
         },
-       
         {
             "type": "Microsoft.Storage/storageAccounts",
             "apiVersion": "2023-05-01",
@@ -646,7 +642,7 @@
                 }
             }
         },
-         {
+        {
             "type": "Microsoft.Storage/storageAccounts/queueServices/queues",
             "apiVersion": "2024-01-01",
             "name": "[concat(parameters('storageaccount_Build2025_HOL347_name'), '/default/queue1')]",
