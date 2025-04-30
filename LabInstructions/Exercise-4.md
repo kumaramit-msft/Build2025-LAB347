@@ -196,10 +196,10 @@ If you want to prove that the agent is actually interacting with your app via th
 
 ![Log stream and app view to verify agent interaction with app](./images/Exercise-4-logstream.png)
 
-> **NOTE**
+> **NOTE**  
 > If you are getting the response "No response from agent" when using the app, your agent is likely being throttled by the AI Agent Service. Wait a couple minutes and try again or update the throttling in the AI Foundry portal by following these steps:
 >
-> 1. Go to your Azure AI Project resource in the Azure portal.
+> 1. Go to your **Azure AI Project** resource in the Azure portal.
 > 2. Select **Launch studio**.
 > 3. In the left-hand menu of the studio under **My assets**, select **Models + endpoints**.
 > 4. Select the model deployment.
