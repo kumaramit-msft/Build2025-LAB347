@@ -835,9 +835,6 @@
               },
               "properties": {
                 "customSubDomainName": "[toLower(format('{0}', toLower(parameters('AIFoundry_AIService_Build2025_HOL347_name'))))]",
-                "apiProperties": {
-                  "statisticsEnabled": false
-                },
                 "publicNetworkAccess": "Enabled"
               }
             },
@@ -872,7 +869,7 @@
                 "metadata": {
                   "ApiType": "Azure",
                   "ResourceId": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('AIFoundry_AIService_Build2025_HOL347_name'))]",
-                  "Location": "parameters('AzureAI_Region')"
+                  "Location": "[parameters('AzureAI_Region')]"
                 }
             },
             "dependsOn": [
