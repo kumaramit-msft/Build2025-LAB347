@@ -104,7 +104,7 @@
         },
         "AIFoundryHub_Build2025_HOL347_ModelCapacity": {
                 "type": "int",
-                "defaultValue": 440,
+                "defaultValue": 200,
                 "metadata": {
                     "description": "Model deployment capacity"
                 }
